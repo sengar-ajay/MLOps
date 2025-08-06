@@ -1,0 +1,381 @@
+name: Maintenance & Security
+
+on:
+  schedule:
+    # Run daily at 06:00 UTC for security checks
+    - cron: '0 6 * * *'
+    # Run weekly on Mondays at 08:00 UTC for dependency updates
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+    inputs:
+      security_scan_only:
+        description: 'Run security scan only'
+        required: false
+        default: 'false'
+        type: boolean
+      update_dependencies:
+        description: 'Update dependencies'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety bandit semgrep
+
+    - name: Run safety check for known vulnerabilities
+      run: |
+        pip install -r requirements.txt
+        safety check --json --output safety-report.json || true
+        
+        if [ -f safety-report.json ]; then
+          echo "🔍 Safety scan completed"
+          cat safety-report.json
+        fi
+
+    - name: Run Bandit security linter
+      run: |
+        bandit -r src/ -f json -o bandit-report.json || true
+        
+        if [ -f bandit-report.json ]; then
+          echo "🔍 Bandit scan completed"
+          # Show high and medium severity issues
+          python -c "
+          import json
+          with open('bandit-report.json', 'r') as f:
+              data = json.load(f)
+          
+          results = data.get('results', [])
+          high_issues = [r for r in results if r['issue_severity'] == 'HIGH']
+          medium_issues = [r for r in results if r['issue_severity'] == 'MEDIUM']
+          
+          if high_issues:
+              print(f'🚨 {len(high_issues)} HIGH severity issues found')
+              for issue in high_issues:
+                  print(f'  - {issue[\"test_name\"]}: {issue[\"filename\"]}:{issue[\"line_number\"]}')
+          
+          if medium_issues:
+              print(f'⚠️  {len(medium_issues)} MEDIUM severity issues found')
+          
+          if not high_issues and not medium_issues:
+              print('✅ No high or medium severity issues found')
+          "
+        fi
+
+    - name: Run Semgrep security analysis
+      run: |
+        semgrep --config=auto src/ --json --output=semgrep-report.json || true
+        
+        if [ -f semgrep-report.json ]; then
+          echo "🔍 Semgrep scan completed"
+          python -c "
+          import json
+          with open('semgrep-report.json', 'r') as f:
+              data = json.load(f)
+          
+          results = data.get('results', [])
+          if results:
+              print(f'⚠️  {len(results)} potential security issues found')
+              for result in results[:5]:  # Show first 5
+                  print(f'  - {result.get(\"check_id\", \"Unknown\")}: {result.get(\"path\", \"Unknown\")}')
+          else:
+              print('✅ No security issues found by Semgrep')
+          "
+        fi
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports-${{ github.run_number }}
+        path: |
+          safety-report.json
+          bandit-report.json
+          semgrep-report.json
+
+  dependency-update:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 8 * * 1' || github.event.inputs.update_dependencies == 'true'
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install pip-tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-tools
+
+    - name: Check for outdated packages
+      run: |
+        pip install -r requirements.txt
+        pip list --outdated --format=json > outdated-packages.json
+        
+        python -c "
+        import json
+        with open('outdated-packages.json', 'r') as f:
+            outdated = json.load(f)
+        
+        if outdated:
+            print('📦 Outdated packages found:')
+            for pkg in outdated:
+                print(f'  - {pkg[\"name\"]}: {pkg[\"version\"]} → {pkg[\"latest_version\"]}')
+        else:
+            print('✅ All packages are up to date')
+        "
+
+    - name: Generate updated requirements
+      run: |
+        # Create requirements.in from current requirements.txt
+        cp requirements.txt requirements.in
+        
+        # Generate updated requirements with latest compatible versions
+        pip-compile --upgrade requirements.in
+        
+        # Show differences
+        if ! diff -u requirements.txt requirements.in > requirements.diff; then
+          echo "📝 Dependency updates available:"
+          cat requirements.diff
+        else
+          echo "✅ No dependency updates needed"
+        fi
+
+    - name: Test with updated dependencies
+      run: |
+        if [ -f requirements.in ] && ! cmp -s requirements.txt requirements.in; then
+          echo "🧪 Testing with updated dependencies..."
+          
+          # Install updated dependencies
+          pip install -r requirements.in
+          
+          # Run basic import tests
+          python -c "
+          import sys
+          modules_to_test = [
+              'sklearn', 'pandas', 'numpy', 'mlflow', 
+              'flask', 'fastapi', 'pytest', 'joblib'
+          ]
+          
+          failed = []
+          for module in modules_to_test:
+              try:
+                  __import__(module)
+                  print(f'✅ {module}')
+              except ImportError as e:
+                  print(f'❌ {module}: {e}')
+                  failed.append(module)
+          
+          if failed:
+              print(f'❌ Failed to import: {failed}')
+              sys.exit(1)
+          else:
+              print('✅ All critical modules import successfully')
+          "
+          
+          # Run quick tests
+          pytest tests/ -x --tb=short || echo "⚠️ Some tests failed with updated dependencies"
+        fi
+
+    - name: Create dependency update PR
+      if: github.event_name == 'schedule'
+      run: |
+        if [ -f requirements.in ] && ! cmp -s requirements.txt requirements.in; then
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Create new branch for dependency updates
+          BRANCH_NAME="automated/dependency-updates-$(date +%Y%m%d)"
+          git checkout -b $BRANCH_NAME
+          
+          # Copy updated requirements
+          cp requirements.in requirements.txt
+          rm requirements.in
+          
+          git add requirements.txt
+          git commit -m "🔄 Automated dependency updates
+
+          - Updated packages to latest compatible versions
+          - Tested import compatibility
+          - Generated by GitHub Actions maintenance workflow"
+          
+          # Push branch (would need additional setup for PR creation)
+          echo "Branch $BRANCH_NAME ready for PR creation"
+        fi
+
+  docker-security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build Docker image for scanning
+      run: |
+        docker build -t mlops-security-scan:latest .
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'mlops-security-scan:latest'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Run Docker Scout (if available)
+      run: |
+        # Check for Docker Scout
+        if command -v docker-scout &> /dev/null; then
+          echo "🔍 Running Docker Scout analysis..."
+          docker scout cves mlops-security-scan:latest || echo "Docker Scout scan completed with warnings"
+        else
+          echo "ℹ️  Docker Scout not available, skipping"
+        fi
+
+  performance-monitoring:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install memory-profiler psutil
+
+    - name: Run performance benchmarks
+      run: |
+        python -c "
+        import time
+        import psutil
+        import joblib
+        import numpy as np
+        from memory_profiler import memory_usage
+        
+        def benchmark_model_loading():
+            '''Benchmark model loading time'''
+            start_time = time.time()
+            
+            try:
+                model = joblib.load('models/best_model.pkl')
+                scaler = joblib.load('data/scaler.pkl')
+                
+                load_time = time.time() - start_time
+                print(f'📊 Model loading time: {load_time:.3f} seconds')
+                
+                return model, scaler, load_time
+            except FileNotFoundError:
+                print('⚠️  Model files not found, skipping benchmark')
+                return None, None, 0
+        
+        def benchmark_prediction_speed(model, scaler, n_predictions=1000):
+            '''Benchmark prediction speed'''
+            if model is None or scaler is None:
+                return 0
+            
+            # Generate random test data
+            test_data = np.random.rand(n_predictions, 8)
+            
+            start_time = time.time()
+            test_data_scaled = scaler.transform(test_data)
+            predictions = model.predict(test_data_scaled)
+            prediction_time = time.time() - start_time
+            
+            avg_prediction_time = (prediction_time / n_predictions) * 1000  # ms
+            print(f'📊 Average prediction time: {avg_prediction_time:.3f} ms')
+            print(f'📊 Throughput: {n_predictions/prediction_time:.1f} predictions/second')
+            
+            return avg_prediction_time
+        
+        def check_memory_usage():
+            '''Check current memory usage'''
+            process = psutil.Process()
+            memory_info = process.memory_info()
+            memory_mb = memory_info.rss / 1024 / 1024
+            
+            print(f'📊 Memory usage: {memory_mb:.1f} MB')
+            return memory_mb
+        
+        # Run benchmarks
+        print('🚀 Running performance benchmarks...')
+        print('=' * 40)
+        
+        initial_memory = check_memory_usage()
+        model, scaler, load_time = benchmark_model_loading()
+        
+        if model is not None:
+            prediction_time = benchmark_prediction_speed(model, scaler)
+            final_memory = check_memory_usage()
+            
+            # Performance thresholds
+            if load_time > 5.0:
+                print('⚠️  Model loading time exceeds 5 seconds')
+            
+            if prediction_time > 10.0:
+                print('⚠️  Average prediction time exceeds 10ms')
+            
+            memory_increase = final_memory - initial_memory
+            if memory_increase > 500:
+                print(f'⚠️  Memory usage increased by {memory_increase:.1f} MB')
+            
+            print('✅ Performance benchmark completed')
+        "
+
+    - name: Generate maintenance report
+      run: |
+        echo '# 🔧 Maintenance Report' > maintenance-report.md
+        echo '' >> maintenance-report.md
+        echo '## Security Scan Summary' >> maintenance-report.md
+        echo '- **Date**: '$(date -u) >> maintenance-report.md
+        echo '- **Trigger**: ${{ github.event_name }}' >> maintenance-report.md
+        echo '' >> maintenance-report.md
+        
+        # Add security scan results if available
+        if [ -f safety-report.json ]; then
+          echo '### Safety Check Results' >> maintenance-report.md
+          python -c "
+          import json
+          try:
+              with open('safety-report.json', 'r') as f:
+                  data = json.load(f)
+              
+              if isinstance(data, list) and data:
+                  print(f'- **Vulnerabilities found**: {len(data)}')
+              else:
+                  print('- **Status**: ✅ No known vulnerabilities')
+          except:
+              print('- **Status**: ⚠️ Scan completed with warnings')
+          " >> maintenance-report.md
+          echo '' >> maintenance-report.md
+        fi
+
+    - name: Upload maintenance report
+      uses: actions/upload-artifact@v3
+      with:
+        name: maintenance-report-${{ github.run_number }}
+        path: maintenance-report.md
