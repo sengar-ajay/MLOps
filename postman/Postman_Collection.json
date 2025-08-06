@@ -1,0 +1,611 @@
+{
+	"info": {
+		"_postman_id": "mlops-housing-api-collection",
+		"name": "MLOps California Housing API",
+		"description": "Complete API collection for California Housing Price Prediction MLOps Pipeline\n\nThis collection includes all endpoints for testing the machine learning model API:\n- Health checks\n- Model information\n- Single predictions\n- Batch predictions\n- Error handling examples\n\nBase URL: http://localhost:5000",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "mlops-api"
+	},
+	"item": [
+		{
+			"name": "Health & Info",
+			"item": [
+				{
+					"name": "API Home",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains message\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "Get basic API information and welcome message"
+					},
+					"response": []
+				},
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"API is healthy\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql('healthy');",
+									"    pm.expect(jsonData.model_loaded).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Response has timestamp\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('timestamp');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Check API health status and model availability"
+					},
+					"response": []
+				},
+				{
+					"name": "Model Information",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Model info is complete\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('model_type');",
+									"    pm.expect(jsonData).to.have.property('features');",
+									"    pm.expect(jsonData).to.have.property('feature_names');",
+									"    pm.expect(jsonData.features).to.eql(8);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/info",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"info"
+							]
+						},
+						"description": "Get detailed information about the loaded model"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for checking API status and getting model information"
+		},
+		{
+			"name": "Predictions",
+			"item": [
+				{
+					"name": "Single Prediction - San Francisco House",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Prediction is valid\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('prediction');",
+									"    pm.expect(jsonData).to.have.property('timestamp');",
+									"    pm.expect(jsonData).to.have.property('model_used');",
+									"    pm.expect(jsonData.prediction).to.be.a('number');",
+									"    pm.expect(jsonData.prediction).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"MedInc\": 8.3252,\n    \"HouseAge\": 41.0,\n    \"AveRooms\": 6.98,\n    \"AveBedrms\": 1.02,\n    \"Population\": 322.0,\n    \"AveOccup\": 2.55,\n    \"Latitude\": 37.88,\n    \"Longitude\": -122.23\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/predict",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"predict"
+							]
+						},
+						"description": "Predict house price for a high-value San Francisco area property"
+					},
+					"response": []
+				},
+				{
+					"name": "Single Prediction - Los Angeles House",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Prediction is valid\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.prediction).to.be.a('number');",
+									"    pm.expect(jsonData.prediction).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"MedInc\": 7.2574,\n    \"HouseAge\": 21.0,\n    \"AveRooms\": 5.64,\n    \"AveBedrms\": 0.92,\n    \"Population\": 2401.0,\n    \"AveOccup\": 2.11,\n    \"Latitude\": 39.43,\n    \"Longitude\": -121.22\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/predict",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"predict"
+							]
+						},
+						"description": "Predict house price for a Los Angeles area property"
+					},
+					"response": []
+				},
+				{
+					"name": "Single Prediction - Budget House",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Prediction is valid\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.prediction).to.be.a('number');",
+									"    pm.expect(jsonData.prediction).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"MedInc\": 3.5214,\n    \"HouseAge\": 15.0,\n    \"AveRooms\": 4.32,\n    \"AveBedrms\": 1.15,\n    \"Population\": 1853.0,\n    \"AveOccup\": 3.25,\n    \"Latitude\": 32.71,\n    \"Longitude\": -117.16\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/predict",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"predict"
+							]
+						},
+						"description": "Predict house price for a more affordable property"
+					},
+					"response": []
+				},
+				{
+					"name": "Batch Prediction - Multiple Houses",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Batch predictions are valid\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('predictions');",
+									"    pm.expect(jsonData).to.have.property('timestamp');",
+									"    pm.expect(jsonData.predictions).to.be.an('array');",
+									"    pm.expect(jsonData.predictions).to.have.lengthOf(3);",
+									"    ",
+									"    // Check each prediction is a valid number",
+									"    jsonData.predictions.forEach(prediction => {",
+									"        pm.expect(prediction).to.be.a('number');",
+									"        pm.expect(prediction).to.be.above(0);",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"instances\": [\n        {\n            \"MedInc\": 8.3252,\n            \"HouseAge\": 41.0,\n            \"AveRooms\": 6.98,\n            \"AveBedrms\": 1.02,\n            \"Population\": 322.0,\n            \"AveOccup\": 2.55,\n            \"Latitude\": 37.88,\n            \"Longitude\": -122.23\n        },\n        {\n            \"MedInc\": 7.2574,\n            \"HouseAge\": 21.0,\n            \"AveRooms\": 5.64,\n            \"AveBedrms\": 0.92,\n            \"Population\": 2401.0,\n            \"AveOccup\": 2.11,\n            \"Latitude\": 39.43,\n            \"Longitude\": -121.22\n        },\n        {\n            \"MedInc\": 3.5214,\n            \"HouseAge\": 15.0,\n            \"AveRooms\": 4.32,\n            \"AveBedrms\": 1.15,\n            \"Population\": 1853.0,\n            \"AveOccup\": 3.25,\n            \"Latitude\": 32.71,\n            \"Longitude\": -117.16\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/predict_batch",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"predict_batch"
+							]
+						},
+						"description": "Get predictions for multiple houses in a single request"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for making single and batch predictions"
+		},
+		{
+			"name": "Error Handling Tests",
+			"item": [
+				{
+					"name": "Invalid JSON Format",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error message is present\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"MedInc\": 8.3252,\n    \"HouseAge\": 41.0,\n    \"AveRooms\": 6.98,\n    // Invalid JSON comment\n    \"AveBedrms\": 1.02\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/predict",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"predict"
+							]
+						},
+						"description": "Test API response to invalid JSON format"
+					},
+					"response": []
+				},
+				{
+					"name": "Missing Required Features",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Missing features error\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.include('Missing features');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"MedInc\": 8.3252,\n    \"HouseAge\": 41.0\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/predict",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"predict"
+							]
+						},
+						"description": "Test API response when required features are missing"
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid Feature Values",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Invalid values error\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"MedInc\": \"invalid_string\",\n    \"HouseAge\": 41.0,\n    \"AveRooms\": 6.98,\n    \"AveBedrms\": 1.02,\n    \"Population\": 322.0,\n    \"AveOccup\": 2.55,\n    \"Latitude\": 37.88,\n    \"Longitude\": -122.23\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/predict",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"predict"
+							]
+						},
+						"description": "Test API response to invalid feature value types"
+					},
+					"response": []
+				},
+				{
+					"name": "Empty Batch Request",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Empty instances error\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"instances\": []\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/predict_batch",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"predict_batch"
+							]
+						},
+						"description": "Test batch prediction with empty instances array"
+					},
+					"response": []
+				},
+				{
+					"name": "Method Not Allowed - GET on POST endpoint",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 405\", function () {",
+									"    pm.response.to.have.status(405);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/predict",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"predict"
+							]
+						},
+						"description": "Test that GET requests to prediction endpoints return Method Not Allowed"
+					},
+					"response": []
+				},
+				{
+					"name": "404 - Non-existent Endpoint",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/nonexistent",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"nonexistent"
+							]
+						},
+						"description": "Test 404 response for non-existent endpoints"
+					},
+					"response": []
+				}
+			],
+			"description": "Test cases for various error conditions and edge cases"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		}
+	]
+}
