@@ -58,8 +58,9 @@ Assignment/
 1. **Clone and navigate to the repository:**
 
 ```bash
-git clone <your-repo-url>
-cd Assignment
+git clone [https://github.com/sengar-ajay/](https://github.com/sengar-ajay/MLOps.git)
+cd MLOps
+
 ```
 
 2. **Install dependencies:**
