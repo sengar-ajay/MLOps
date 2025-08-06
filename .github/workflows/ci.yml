@@ -57,8 +57,11 @@ jobs:
         python -c "
         import joblib
         import numpy as np
+        import pandas as pd
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.preprocessing import StandardScaler
+        
+        print('Creating test fixtures...')
         
         # Create dummy model
         model = RandomForestRegressor(n_estimators=10, random_state=42)
@@ -66,24 +69,42 @@ jobs:
         y_dummy = np.random.rand(100)
         model.fit(X_dummy, y_dummy)
         joblib.dump(model, 'models/best_model.pkl')
+        print('Model created and saved')
         
         # Create dummy scaler
         scaler = StandardScaler()
         scaler.fit(X_dummy)
         joblib.dump(scaler, 'data/scaler.pkl')
+        print('Scaler created and saved')
         
         # Create dummy training data
-        import pandas as pd
         feature_names = ['MedInc', 'HouseAge', 'AveRooms', 'AveBedrms', 'Population', 'AveOccup', 'Latitude', 'Longitude']
         pd.DataFrame(X_dummy, columns=feature_names).to_csv('data/X_train.csv', index=False)
+        print('Training data created')
+        
+        # Verify files were created
+        import os
+        files_to_check = ['models/best_model.pkl', 'data/scaler.pkl', 'data/X_train.csv']
+        for file_path in files_to_check:
+            if os.path.exists(file_path):
+                print(f'SUCCESS: {file_path} exists')
+            else:
+                print(f'ERROR: {file_path} missing')
+                exit(1)
         "
 
     - name: Test with pytest
       run: |
-        pytest tests/ -v --cov=src --cov-report=xml --cov-report=html
+        echo "Running tests with Python ${{ matrix.python-version }}"
+        echo "Python version details:"
+        python --version
+        echo "Installed packages:"
+        pip list | grep -E "(pytest|flask|sklearn|pandas|numpy)"
+        echo "Starting tests..."
+        python -m pytest tests/ -v --cov=src --cov-report=xml --cov-report=html --tb=short || (echo "Tests failed, showing detailed error info:" && python -m pytest tests/ -v --tb=long --maxfail=1)
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
