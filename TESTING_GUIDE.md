@@ -5,27 +5,32 @@ This guide provides step-by-step instructions to test all the GitHub Actions wor
 ## Testing Overview
 
 Our pipeline includes 4 main workflows:
+
 - **CI (Continuous Integration)** - Tests, linting, validation
-- **CD (Continuous Deployment)** - Docker builds, deployments  
+- **CD (Continuous Deployment)** - Docker builds, deployments
 - **ML Pipeline** - Model training and validation
 - **Maintenance** - Security scans, dependency updates
 
 ## 1. Testing CI Workflow
 
 ### Automatic Triggers
+
 The CI workflow runs on:
+
 - Push to `main`, `develop`, `feature/*` branches
 - Pull requests to `main`, `develop`
 
 ### Test Steps:
 
 #### A. Test with Current Push (Already Done)
+
 ```bash
 # We just pushed to feature/enhancement, which should trigger CI
 # Check GitHub Actions tab in your repository to see the workflow running
 ```
 
 #### B. Create a Test Change
+
 ```bash
 # Make a small change to trigger another CI run
 echo "# Testing CI Pipeline" >> TEST_CI.md
@@ -35,7 +40,9 @@ git push origin feature/enhancement
 ```
 
 #### C. Expected CI Results
+
 The CI workflow should:
+
 - Run tests on Python 3.9, 3.10, 3.11
 - Perform linting with flake8
 - Check code formatting with black
@@ -71,6 +78,7 @@ gh workflow run ml-pipeline.yml -f data_validation_only=true
 The CD workflow has multiple stages:
 
 ### A. Test Docker Build (Staging)
+
 ```bash
 # CD triggers on push to main, so let's merge our feature branch
 git checkout main
@@ -80,6 +88,7 @@ git push origin main
 ```
 
 ### B. Test Production Deployment
+
 ```bash
 # Create a version tag to trigger production deployment
 git tag -a v1.0.0 -m "Release version 1.0.0"
@@ -87,6 +96,7 @@ git push origin v1.0.0
 ```
 
 ### Expected CD Results
+
 - Docker image built and pushed to GitHub Container Registry
 - Staging deployment with health checks
 - Production deployment (only on tags)
@@ -96,6 +106,7 @@ git push origin v1.0.0
 ## 4. Testing ML Pipeline Workflow
 
 ### A. Manual Trigger Test
+
 ```bash
 # Using GitHub CLI
 gh workflow run ml-pipeline.yml -f retrain_model=true
@@ -108,11 +119,14 @@ git push origin main
 ```
 
 ### B. Scheduled Test
+
 The ML pipeline runs weekly on Sundays at 02:00 UTC. To test scheduling:
+
 - Wait for the scheduled run, or
 - Manually trigger using the web interface
 
 ### Expected ML Pipeline Results
+
 - Data validation checks
 - Model training execution
 - Performance comparison with existing models
@@ -122,18 +136,21 @@ The ML pipeline runs weekly on Sundays at 02:00 UTC. To test scheduling:
 ## 5. Testing Maintenance Workflow
 
 ### A. Manual Security Scan
+
 ```bash
 # Trigger security scan only
 gh workflow run maintenance.yml -f security_scan_only=true
 ```
 
 ### B. Manual Dependency Update
+
 ```bash
 # Trigger dependency updates
 gh workflow run maintenance.yml -f update_dependencies=true
 ```
 
 ### Expected Maintenance Results
+
 - Security vulnerability reports
 - Dependency update analysis
 - Docker image security scans
@@ -143,12 +160,14 @@ gh workflow run maintenance.yml -f update_dependencies=true
 ## 6. Monitoring Test Results
 
 ### A. GitHub Actions Interface
+
 1. Go to repository → Actions tab
 2. Click on workflow runs to see details
 3. Check job logs for success/failure
 4. Download artifacts (reports, coverage, etc.)
 
 ### B. Check Workflow Status
+
 ```bash
 # List recent workflow runs
 gh run list
@@ -163,6 +182,7 @@ gh run download [RUN_ID]
 ## 7. Testing Specific Components
 
 ### A. Test Model Loading (Local)
+
 ```bash
 # Verify model files exist and can be loaded
 python -c "
@@ -178,6 +198,7 @@ else:
 ```
 
 ### B. Test API Health Check (Local)
+
 ```bash
 # Start API locally
 python src/api.py &
@@ -192,6 +213,7 @@ kill $API_PID
 ```
 
 ### C. Test Data Validation (Local)
+
 ```bash
 # Run data preprocessing validation
 python src/data_preprocessing.py --validate-only
@@ -200,6 +222,7 @@ python src/data_preprocessing.py --validate-only
 ## 8. Troubleshooting Common Issues
 
 ### A. Workflow Fails Due to Missing Files
+
 ```bash
 # Ensure required files exist
 ls -la models/
@@ -210,6 +233,7 @@ python run_pipeline.py
 ```
 
 ### B. Docker Build Fails
+
 ```bash
 # Test Docker build locally
 docker build -t test-mlops .
@@ -217,6 +241,7 @@ docker run --rm test-mlops python -c "print('Container works')"
 ```
 
 ### C. Security Scan Failures
+
 ```bash
 # Run security tools locally
 pip install bandit safety
@@ -229,22 +254,26 @@ safety check
 After successful workflow runs, you should see these artifacts:
 
 ### CI Workflow Artifacts
+
 - Test coverage reports (HTML/XML)
 - Security scan results (JSON)
 - Linting reports
 
-### CD Workflow Artifacts  
+### CD Workflow Artifacts
+
 - Docker images in GitHub Container Registry
 - Deployment reports (Markdown)
 - Health check results
 
 ### ML Pipeline Artifacts
+
 - Trained model files (.pkl)
 - Model metrics (JSON)
 - Training reports (Markdown)
 - Performance comparison reports
 
 ### Maintenance Artifacts
+
 - Security vulnerability reports
 - Dependency analysis reports
 - Performance benchmark results
@@ -254,6 +283,7 @@ After successful workflow runs, you should see these artifacts:
 Use this checklist to verify your pipeline is working correctly:
 
 ### CI Workflow ✓
+
 - [ ] Workflow triggers on push to feature branch
 - [ ] Tests run on multiple Python versions
 - [ ] Linting and formatting checks pass
@@ -261,6 +291,7 @@ Use this checklist to verify your pipeline is working correctly:
 - [ ] Artifacts are generated and uploaded
 
 ### CD Workflow ✓
+
 - [ ] Docker image builds successfully
 - [ ] Image pushed to container registry
 - [ ] Staging deployment completes
@@ -268,6 +299,7 @@ Use this checklist to verify your pipeline is working correctly:
 - [ ] Production deployment works (on tags)
 
 ### ML Pipeline ✓
+
 - [ ] Data validation runs successfully
 - [ ] Model training completes
 - [ ] Model metrics are within thresholds
@@ -275,6 +307,7 @@ Use this checklist to verify your pipeline is working correctly:
 - [ ] Performance comparison works
 
 ### Maintenance Workflow ✓
+
 - [ ] Security scans run without errors
 - [ ] Dependency checks complete
 - [ ] Performance benchmarks execute

@@ -113,7 +113,7 @@ jobs:
           python-version: "3.10"
 
       - name: Cache pip dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -184,7 +184,7 @@ jobs:
           "
 
       - name: Upload model artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: trained-model-${{ github.run_number }}
           path: |
@@ -229,7 +229,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Download new model artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: trained-model-${{ github.run_number }}
           path: ./new-model/
@@ -299,7 +299,7 @@ jobs:
           fi
 
       - name: Upload model report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: model-training-report-${{ github.run_number }}
           path: model-report.md
