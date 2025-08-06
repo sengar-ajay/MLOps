@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  mlops-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./mlruns:/app/mlruns
+      - ./mlartifacts:/app/mlartifacts
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  mlflow-server:
+    image: python:3.10-slim
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./mlruns:/mlflow/mlruns
+      - ./mlartifacts:/mlflow/mlartifacts
+    working_dir: /mlflow
+    command: >
+      bash -c "
+        pip install mlflow==2.8.1 &&
+        mlflow server 
+        --backend-store-uri file:///mlflow/mlruns 
+        --default-artifact-root file:///mlflow/mlartifacts 
+        --host 0.0.0.0 
+        --port 5001
+      "
+    restart: unless-stopped
