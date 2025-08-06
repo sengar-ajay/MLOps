@@ -53,7 +53,7 @@ This directory contains automated CI/CD workflows for the MLOps project, providi
 **Features:**
 
 - STATS: Automated data quality validation
-- 🧠 Model training and hyperparameter optimization
+- Model training and hyperparameter optimization
 - IMPROVED: Performance comparison with existing models
 - CYCLE: Automated model versioning and artifact management
 - INFO: Comprehensive training reports
@@ -277,24 +277,9 @@ gh workflow run workflow-name.yml --field enable_debug=true
 gh run download <run_id>
 ```
 
-### Contact & Resources
+<img width="1664" height="1027" alt="image" src="https://github.com/user-attachments/assets/878387ae-4c57-44ac-bab7-c96fe6cb6ad3" />
 
-- DOCS: [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- DOCKER: [Docker Documentation](https://docs.docker.com/)
-- AUTO: [MLflow Documentation](https://mlflow.org/docs/latest/index.html)
 
----
-
-## INFO: Changelog
-
-### Version 1.0.0 (Initial Release)
-
-- SUCCESS: Complete CI/CD pipeline implementation
-- AUTO: Automated ML model training and validation
-- SECURITY: Comprehensive security scanning
-- PACKAGES: Automated dependency management
-- DOCKER: Container-based deployment
-- STATS: Performance monitoring and reporting
 
 ---
 
