@@ -268,3 +268,14 @@ python cleanup.py
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+
+## ML Flow pipline 
+
+<img width="1724" height="837" alt="image" src="https://github.com/user-attachments/assets/29f989b3-f75d-4caa-96dd-43ac93d95f93" />
+<img width="1724" height="837" alt="image" src="https://github.com/user-attachments/assets/05537200-e34d-4db3-a5f2-395b4593d2cb" />
+<img width="1724" height="837" alt="image" src="https://github.com/user-attachments/assets/ebae35c4-44b3-478c-b7f8-c6dbfdfa0f2b" />
+<img width="1724" height="837" alt="image" src="https://github.com/user-attachments/assets/2f31ad66-07b9-414c-ad70-cffd9bf6f867" />
+
+
+
