@@ -1,0 +1,325 @@
+name: ML Model Training & Validation
+
+on:
+  schedule:
+    # Run weekly on Sundays at 02:00 UTC for model retraining
+    - cron: "0 2 * * 0"
+  workflow_dispatch:
+    inputs:
+      retrain_model:
+        description: "Force model retraining"
+        required: false
+        default: "false"
+        type: boolean
+      data_validation_only:
+        description: "Run data validation only"
+        required: false
+        default: "false"
+        type: boolean
+  push:
+    paths:
+      - "src/model_training.py"
+      - "src/data_preprocessing.py"
+      - "data/**"
+
+jobs:
+  data-validation:
+    runs-on: ubuntu-latest
+    outputs:
+      data-changed: ${{ steps.check-data.outputs.changed }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check data changes
+        id: check-data
+        run: |
+          if git diff --name-only HEAD~1 HEAD | grep -q "^data/"; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate data quality
+        run: |
+          python -c "
+          import pandas as pd
+          import numpy as np
+          import os
+
+          def validate_data_file(filepath, expected_shape_min=None):
+              if not os.path.exists(filepath):
+                  print(f'ERROR: {filepath} not found')
+                  return False
+                  
+              df = pd.read_csv(filepath)
+              print(f'{filepath}: Shape {df.shape}')
+              
+              # Check for missing values
+              missing = df.isnull().sum().sum()
+              if missing > 0:
+                  print(f'WARNING: {filepath}: {missing} missing values found')
+              
+              # Check minimum shape if provided
+              if expected_shape_min and df.shape[0] < expected_shape_min[0]:
+                  print(f'ERROR: {filepath}: Insufficient data rows {df.shape[0]} < {expected_shape_min[0]}')
+                  return False
+                  
+              return True
+
+          # Validate training data
+          files_to_check = [
+              ('data/X_train.csv', (100, 8)),
+              ('data/X_test.csv', (50, 8)),
+              ('data/y_train.csv', (100, 1)),
+              ('data/y_test.csv', (50, 1))
+          ]
+
+          all_valid = True
+          for filepath, min_shape in files_to_check:
+              if not validate_data_file(filepath, min_shape):
+                  all_valid = False
+
+          if not all_valid:
+              print('ERROR: Data validation failed')
+              exit(1)
+          else:
+              print('All data validation checks passed')
+          "
+
+  model-training:
+    runs-on: ubuntu-latest
+    needs: data-validation
+    if: needs.data-validation.outputs.data-changed == 'true' || github.event.inputs.retrain_model == 'true' || github.event_name == 'schedule'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run data preprocessing
+        run: |
+          python src/data_preprocessing.py
+
+      - name: Train model
+        run: |
+          python src/model_training.py
+
+      - name: Validate trained model
+        run: |
+          python -c "
+          import joblib
+          import json
+          import os
+          import numpy as np
+
+          # Load model metrics
+          if os.path.exists('best_model_metrics.json'):
+              with open('best_model_metrics.json', 'r') as f:
+                  metrics = json.load(f)
+              
+              print('Model Metrics:')
+              for key, value in metrics.items():
+                  print(f'  {key}: {value:.4f}')
+              
+              # Validate model performance thresholds
+              if 'test_r2_score' in metrics:
+                  if metrics['test_r2_score'] < 0.6:
+                      print('ERROR: Model R² score below threshold (0.6)')
+                      exit(1)
+                  else:
+                      print('Model R² score meets threshold')
+              
+              if 'test_rmse' in metrics:
+                  if metrics['test_rmse'] > 1.0:
+                      print('ERROR: Model RMSE above threshold (1.0)')
+                      exit(1)
+                  else:
+                      print('Model RMSE meets threshold')
+          else:
+              print('ERROR: Model metrics file not found')
+              exit(1)
+
+          # Test model loading and prediction
+          try:
+              model = joblib.load('models/best_model.pkl')
+              scaler = joblib.load('data/scaler.pkl')
+              
+              # Test prediction with sample data
+              test_input = np.array([[8.3252, 41.0, 6.98, 1.02, 322.0, 2.56, 37.88, -122.23]])
+              test_input_scaled = scaler.transform(test_input)
+              prediction = model.predict(test_input_scaled)
+              
+              print(f'Model prediction test successful: {prediction[0]:.4f}')
+              
+          except Exception as e:
+              print(f'ERROR: Model loading/prediction failed: {e}')
+              exit(1)
+          "
+
+      - name: Upload model artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model-${{ github.run_number }}
+          path: |
+            models/best_model.pkl
+            data/scaler.pkl
+            best_model_metrics.json
+
+      - name: Commit updated model (if on main branch)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          if [ -f "models/best_model.pkl" ] && [ -f "data/scaler.pkl" ]; then
+            git add models/best_model.pkl data/scaler.pkl best_model_metrics.json
+            
+            if git diff --cached --quiet; then
+              echo "No model changes to commit"
+            else
+              git commit -m "Auto-update trained model [skip ci]"
+              git push
+              echo "Updated model committed to repository"
+            fi
+          fi
+
+  model-comparison:
+    runs-on: ubuntu-latest
+    needs: [data-validation, model-training]
+    if: needs.model-training.result == 'success'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Download new model artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: trained-model-${{ github.run_number }}
+          path: ./new-model/
+
+      - name: Compare model performance
+        run: |
+          python -c "
+          import json
+          import os
+
+          # Load current model metrics
+          current_metrics = {}
+          if os.path.exists('best_model_metrics.json'):
+              with open('best_model_metrics.json', 'r') as f:
+                  current_metrics = json.load(f)
+
+          # Load new model metrics
+          new_metrics = {}
+          if os.path.exists('new-model/best_model_metrics.json'):
+              with open('new-model/best_model_metrics.json', 'r') as f:
+                  new_metrics = json.load(f)
+
+          print('Model Performance Comparison:')
+          print('=' * 50)
+
+          metrics_to_compare = ['test_r2_score', 'test_rmse', 'test_mae']
+
+          for metric in metrics_to_compare:
+              if metric in current_metrics and metric in new_metrics:
+                  current_val = current_metrics[metric]
+                  new_val = new_metrics[metric]
+                  
+                  if metric == 'test_r2_score':  # Higher is better
+                      improvement = new_val - current_val
+                      status = 'IMPROVED' if improvement > 0 else 'DEGRADED' if improvement < 0 else 'UNCHANGED'
+                  else:  # Lower is better (RMSE, MAE)
+                      improvement = current_val - new_val
+                      status = 'IMPROVED' if improvement > 0 else 'DEGRADED' if improvement < 0 else 'UNCHANGED'
+                  
+                  print(f'{metric}:')
+                  print(f'  Current: {current_val:.4f}')
+                  print(f'  New:     {new_val:.4f}')
+                  print(f'  Change:  {status} {improvement:+.4f}')
+                  print()
+          "
+
+      - name: Generate model report
+        run: |
+          echo '# Model Training Report' > model-report.md
+          echo '' >> model-report.md
+          echo '## Training Summary' >> model-report.md
+          echo '- **Trigger**: ${{ github.event_name }}' >> model-report.md
+          echo '- **Timestamp**: '$(date -u) >> model-report.md
+          echo '- **Commit**: ${{ github.sha }}' >> model-report.md
+          echo '' >> model-report.md
+          echo '## Model Metrics' >> model-report.md
+
+          if [ -f "new-model/best_model_metrics.json" ]; then
+            python -c "
+            import json
+            with open('new-model/best_model_metrics.json', 'r') as f:
+                metrics = json.load(f)
+            
+            for key, value in metrics.items():
+                print(f'- **{key}**: {value:.4f}')
+            " >> model-report.md
+          fi
+
+      - name: Upload model report
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-training-report-${{ github.run_number }}
+          path: model-report.md
+
+  notify-completion:
+    runs-on: ubuntu-latest
+    needs: [data-validation, model-training, model-comparison]
+    if: always()
+
+    steps:
+      - name: Training completion notification
+        run: |
+          if [ "${{ needs.model-training.result }}" == "success" ]; then
+            echo "Model training completed successfully!"
+            echo "Data validation: ${{ needs.data-validation.result }}"
+            echo "Model training: ${{ needs.model-training.result }}"
+            echo "Model comparison: ${{ needs.model-comparison.result }}"
+          else
+            echo "Model training workflow failed"
+            echo "Data validation: ${{ needs.data-validation.result }}"
+            echo "Model training: ${{ needs.model-training.result }}"
+            echo "Model comparison: ${{ needs.model-comparison.result }}"
+          fi
