@@ -86,8 +86,8 @@ jobs:
           import os
 
           # Validate model exists and can be loaded
-          if os.path.exists('models/best_model.pkl'):
-              model = joblib.load('models/best_model.pkl')
+          if os.path.exists('iris_model/model.pkl'):
+              model = joblib.load('iris_model/model.pkl')
               print('Model loaded successfully')
           else:
               print('ERROR: Model file not found')
@@ -155,7 +155,7 @@ jobs:
           import pandas as pd
 
           # Load and test model
-          model = joblib.load('models/best_model.pkl')
+          model = joblib.load('iris_model/model.pkl')
           scaler = joblib.load('data/scaler.pkl')
 
           # Create test data
