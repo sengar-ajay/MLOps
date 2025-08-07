@@ -93,6 +93,31 @@ jobs:
                   exit(1)
           "
 
+      - name: Ensure data files are available
+        run: |
+          echo "Checking data files availability..."
+          ls -la data/ || echo "data directory not found"
+          
+          # Check if all required data files exist
+          missing_files=""
+          for file in X_train.csv X_test.csv y_train.csv y_test.csv scaler.pkl; do
+            if [ ! -f "data/$file" ]; then
+              missing_files="$missing_files data/$file"
+            else
+              echo "Found: data/$file"
+            fi
+          done
+          
+          if [ -n "$missing_files" ]; then
+            echo "Missing data files:$missing_files"
+            echo "Generating missing data files..."
+            python src/data_preprocessing.py
+            echo "Data files generated. Checking again..."
+            ls -la data/
+          else
+            echo "All data files are present"
+          fi
+
       - name: Test with pytest
         env:
           SKIP_NETWORK_DOWNLOAD: "true"
