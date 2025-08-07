@@ -302,13 +302,13 @@ jobs:
 
           if [ -f "new-model/models/best_model_metrics.json" ]; then
             python -c "
-            import json
-            with open('new-model/models/best_model_metrics.json', 'r') as f:
-                metrics = json.load(f)
-            
-            for key, value in metrics.items():
-                print(f'- **{key}**: {value:.4f}')
-            " >> model-report.md
+          import json
+          with open('new-model/models/best_model_metrics.json', 'r') as f:
+              metrics = json.load(f)
+          
+          for key, value in metrics.items():
+              print(f'- **{key}**: {value:.4f}')
+          " >> model-report.md
           fi
 
       - name: Upload model report
