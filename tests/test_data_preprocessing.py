@@ -145,9 +145,13 @@ def test_save_and_load_processed_data(temp_data_dir):
         assert os.path.exists(os.path.join(temp_data_dir, file))
 
     # Load processed data
-    X_train_loaded, X_test_loaded, y_train_loaded, y_test_loaded, scaler_loaded = (
-        load_processed_data(temp_data_dir)
-    )
+    (
+        X_train_loaded,
+        X_test_loaded,
+        y_train_loaded,
+        y_test_loaded,
+        scaler_loaded,
+    ) = load_processed_data(temp_data_dir)
 
     # Check loaded data matches original (ignoring index)
     pd.testing.assert_frame_equal(
