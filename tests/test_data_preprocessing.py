@@ -7,14 +7,12 @@ import shutil
 import sys
 import tempfile
 
-import numpy as np
 import pandas as pd
 import pytest
 
 # Add src directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-
-from data_preprocessing import (
+from data_preprocessing import (  # noqa: E402
     load_california_housing_data,
     load_processed_data,
     preprocess_data,

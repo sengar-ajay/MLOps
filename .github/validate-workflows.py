@@ -4,7 +4,6 @@ GitHub Actions Workflow Validator
 Validates YAML syntax and basic structure of workflow files
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -26,16 +25,17 @@ def validate_workflow_file(filepath):
                 print(f"  ERROR: Missing required key: {key}")
                 return False
 
-        # Check for 'on' key (which might be parsed as True due to YAML boolean interpretation)
+        # Check for 'on' key (which might be parsed as True due to YAML
+        # boolean interpretation)
         has_trigger = "on" in workflow or True in workflow
         if not has_trigger:
-            print(f"  ERROR: Missing workflow trigger ('on' key)")
+            print("  ERROR: Missing workflow trigger ('on' key)")
             return False
 
         # Validate jobs structure
         jobs = workflow.get("jobs", {})
         if not isinstance(jobs, dict) or not jobs:
-            print(f"  ERROR: No jobs defined")
+            print("  ERROR: No jobs defined")
             return False
 
         # Validate each job

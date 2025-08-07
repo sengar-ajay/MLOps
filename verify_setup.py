@@ -5,8 +5,6 @@ Quick verification script to check if MLOps pipeline setup is correct
 import os
 import subprocess
 import sys
-import time
-from pathlib import Path
 
 import requests
 
@@ -170,7 +168,7 @@ def main():
 
     # Summary
     print("\n" + "=" * 50)
-    print(f"VERIFICATION SUMMARY")
+    print("VERIFICATION SUMMARY")
     print("=" * 50)
     print(f"Checks Passed: {checks_passed}/{total_checks}")
 
@@ -181,7 +179,8 @@ def main():
         print("   2. Or run components individually as per guide")
     else:
         print(
-            f"{total_checks - checks_passed} checks failed. Please review the issues above."
+            f"{total_checks - checks_passed} checks failed. "
+            "Please review the issues above."
         )
         print("\nCommon fixes:")
         print("   1. Run: pip install -r requirements.txt")

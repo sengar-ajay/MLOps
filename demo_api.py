@@ -2,7 +2,6 @@
 """
 Demo script to test the MLOps API endpoints
 """
-import json
 import time
 
 import requests

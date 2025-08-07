@@ -6,7 +6,6 @@ import logging
 import os
 
 import joblib
-import numpy as np
 import pandas as pd
 from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import train_test_split
@@ -68,7 +67,7 @@ def preprocess_data(X, y, test_size=0.2, random_state=42):
     X_train_scaled = pd.DataFrame(X_train_scaled, columns=X.columns)
     X_test_scaled = pd.DataFrame(X_test_scaled, columns=X.columns)
 
-    logger.info(f"Data preprocessing completed.")
+    logger.info("Data preprocessing completed.")
     logger.info(f"Training set shape: {X_train_scaled.shape}")
     logger.info(f"Test set shape: {X_test_scaled.shape}")
 

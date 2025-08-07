@@ -4,11 +4,9 @@ Simple test script to verify workflow components work locally
 This helps identify issues before running in GitHub Actions
 """
 
-import json
 import os
 import subprocess
 import sys
-from pathlib import Path
 
 
 def test_python_environment():
@@ -16,7 +14,6 @@ def test_python_environment():
     print("Testing Python environment...")
 
     try:
-        import joblib
         import numpy as np
         import pandas as pd
         import sklearn
@@ -153,9 +150,9 @@ def test_model_files():
     for file_path in model_files:
         if os.path.exists(file_path):
             try:
-                import joblib
+                import joblib  # noqa: F401
 
-                model = joblib.load(file_path)
+                joblib.load(file_path)  # Test loading without storing
                 print(f"  SUCCESS: {file_path} loads successfully")
             except Exception as e:
                 print(f"  ERROR: {file_path} - Cannot load: {e}")

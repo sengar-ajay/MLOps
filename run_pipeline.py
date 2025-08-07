@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 Complete MLOps Pipeline Runner
-This script demonstrates the complete MLOps pipeline from data preprocessing to model deployment
+This script demonstrates the complete MLOps pipeline from data preprocessing
+to model deployment
 """
 import logging
-import os
 import subprocess
 import sys
 import time
@@ -85,7 +85,7 @@ def main():
                 stderr=subprocess.DEVNULL,
             )
             time.sleep(5)  # Give server time to start
-    except:
+    except Exception:
         logger.info("Starting new API server...")
         subprocess.Popen(
             [sys.executable, "src/api.py"],
@@ -100,7 +100,11 @@ def main():
         ("curl -s http://localhost:5000/health", "Health check"),
         ("curl -s http://localhost:5000/info", "Model info"),
         (
-            'curl -s -X POST http://localhost:5000/predict -H "Content-Type: application/json" -d \'{"MedInc": 8.3252, "HouseAge": 41.0, "AveRooms": 6.98, "AveBedrms": 1.02, "Population": 322.0, "AveOccup": 2.55, "Latitude": 37.88, "Longitude": -122.23}\'',
+            "curl -s -X POST http://localhost:5000/predict "
+            '-H "Content-Type: application/json" '
+            '-d \'{"MedInc": 8.3252, "HouseAge": 41.0, "AveRooms": 6.98, '
+            '"AveBedrms": 1.02, "Population": 322.0, "AveOccup": 2.55, '
+            '"Latitude": 37.88, "Longitude": -122.23}\'',
             "Prediction test",
         ),
     ]

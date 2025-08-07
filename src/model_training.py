@@ -73,7 +73,8 @@ def train_linear_regression(X_train, y_train, X_test, y_test):
         mlflow.sklearn.log_model(model, "model")
 
         logger.info(
-            f"Linear Regression - RMSE: {metrics['rmse']:.4f}, MAE: {metrics['mae']:.4f}, R2: {metrics['r2']:.4f}"
+            f"Linear Regression - RMSE: {metrics['rmse']:.4f}, "
+            f"MAE: {metrics['mae']:.4f}, R2: {metrics['r2']:.4f}"
         )
 
         return model, metrics
@@ -116,7 +117,8 @@ def train_random_forest(
         mlflow.sklearn.log_model(model, "model")
 
         logger.info(
-            f"Random Forest - RMSE: {metrics['rmse']:.4f}, MAE: {metrics['mae']:.4f}, R2: {metrics['r2']:.4f}"
+            f"Random Forest - RMSE: {metrics['rmse']:.4f}, "
+            f"MAE: {metrics['mae']:.4f}, R2: {metrics['r2']:.4f}"
         )
 
         return model, metrics
@@ -170,7 +172,8 @@ def train_gradient_boosting(
         mlflow.sklearn.log_model(model, "model")
 
         logger.info(
-            f"Gradient Boosting - RMSE: {metrics['rmse']:.4f}, MAE: {metrics['mae']:.4f}, R2: {metrics['r2']:.4f}"
+            f"Gradient Boosting - RMSE: {metrics['rmse']:.4f}, "
+            f"MAE: {metrics['mae']:.4f}, R2: {metrics['r2']:.4f}"
         )
 
         return model, metrics
@@ -202,7 +205,8 @@ def save_best_model(models_results, models_dir="models"):
 
     logger.info(f"Best model saved to {model_path}")
     logger.info(
-        f"Best model metrics: RMSE: {best_metrics['rmse']:.4f}, MAE: {best_metrics['mae']:.4f}, R2: {best_metrics['r2']:.4f}"
+        f"Best model metrics: RMSE: {best_metrics['rmse']:.4f}, "
+        f"MAE: {best_metrics['mae']:.4f}, R2: {best_metrics['r2']:.4f}"
     )
 
     return best_model, best_metrics
