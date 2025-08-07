@@ -108,14 +108,27 @@ jobs:
           python src/api.py &
           API_PID=$!
 
-          # Wait for API to start
-          sleep 10
+          # Wait for API to start with retries
+          echo "Waiting for API to start..."
+          for i in {1..30}; do
+            if curl -s http://localhost:5000/health > /dev/null 2>&1; then
+              echo "API started successfully after ${i} seconds"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "API failed to start within 30 seconds"
+              kill $API_PID 2>/dev/null || true
+              exit 1
+            fi
+            sleep 1
+          done
 
           # Health check
+          echo "Running health check..."
           curl -f http://localhost:5000/health || exit 1
 
           # Stop the API
-          kill $API_PID
+          kill $API_PID 2>/dev/null || true
 
           echo "API health check passed"
 
