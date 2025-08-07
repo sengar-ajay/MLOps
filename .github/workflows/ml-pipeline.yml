@@ -1,5 +1,10 @@
 name: ML Model Training & Validation
 
+# Add permissions for GitHub Actions to write to repository
+permissions:
+  contents: write
+  actions: read
+
 on:
   schedule:
     # Run weekly on Sundays at 02:00 UTC for model retraining
