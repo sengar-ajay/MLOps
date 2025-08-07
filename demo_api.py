@@ -2,9 +2,10 @@
 """
 Demo script to test the MLOps API endpoints
 """
-import requests
 import json
 import time
+
+import requests
 
 
 def test_api_endpoints():

@@ -4,10 +4,10 @@ Simple test script to verify workflow components work locally
 This helps identify issues before running in GitHub Actions
 """
 
-import os
-import sys
-import subprocess
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -16,10 +16,10 @@ def test_python_environment():
     print("Testing Python environment...")
 
     try:
-        import pandas as pd
-        import numpy as np
-        import sklearn
         import joblib
+        import numpy as np
+        import pandas as pd
+        import sklearn
 
         print(f"  Python: {sys.version}")
         print(f"  Pandas: {pd.__version__}")

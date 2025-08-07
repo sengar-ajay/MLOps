@@ -6,8 +6,9 @@ Validates YAML syntax and basic structure of workflow files
 
 import os
 import sys
-import yaml
 from pathlib import Path
+
+import yaml
 
 
 def validate_workflow_file(filepath):

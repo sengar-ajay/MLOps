@@ -3,11 +3,12 @@
 Quick verification script to check if MLOps pipeline setup is correct
 """
 import os
-import sys
 import subprocess
-import requests
+import sys
 import time
 from pathlib import Path
+
+import requests
 
 
 def check_file_exists(filepath, description):

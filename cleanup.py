@@ -2,10 +2,10 @@
 """
 Cleanup script for MLOps pipeline temporary files and logs
 """
+import glob
 import os
 import shutil
 import subprocess
-import glob
 
 
 def cleanup_files():

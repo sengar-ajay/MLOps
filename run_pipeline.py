@@ -3,11 +3,11 @@
 Complete MLOps Pipeline Runner
 This script demonstrates the complete MLOps pipeline from data preprocessing to model deployment
 """
-import os
-import sys
-import subprocess
-import time
 import logging
+import os
+import subprocess
+import sys
+import time
 
 # Set up logging
 logging.basicConfig(
