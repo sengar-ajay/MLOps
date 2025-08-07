@@ -47,17 +47,27 @@ def load_california_housing_data():
         logger.warning(f"Failed to fetch dataset from internet: {e}")
         
         # Try to load from existing processed data files
-        if (os.path.exists("data/X_train.csv") and os.path.exists("data/X_test.csv") and
-            os.path.exists("data/y_train.csv") and os.path.exists("data/y_test.csv")):
-            
-            logger.info("Loading dataset from existing processed data files...")
-            
-            # Load and combine the split data
-            X_train = pd.read_csv("data/X_train.csv")
-            X_test = pd.read_csv("data/X_test.csv") 
-            y_train = pd.read_csv("data/y_train.csv").squeeze()
-            y_test = pd.read_csv("data/y_test.csv").squeeze()
-            
+        # Check both current directory and parent directory (for tests)
+        data_dirs = ["data", "../data"]
+        cached_data_found = False
+        
+        for data_dir in data_dirs:
+            if (os.path.exists(os.path.join(data_dir, "X_train.csv")) and 
+                os.path.exists(os.path.join(data_dir, "X_test.csv")) and
+                os.path.exists(os.path.join(data_dir, "y_train.csv")) and 
+                os.path.exists(os.path.join(data_dir, "y_test.csv"))):
+                
+                logger.info(f"Loading dataset from existing processed data files in {data_dir}...")
+                
+                # Load and combine the split data
+                X_train = pd.read_csv(os.path.join(data_dir, "X_train.csv"))
+                X_test = pd.read_csv(os.path.join(data_dir, "X_test.csv"))
+                y_train = pd.read_csv(os.path.join(data_dir, "y_train.csv")).squeeze()
+                y_test = pd.read_csv(os.path.join(data_dir, "y_test.csv")).squeeze()
+                cached_data_found = True
+                break
+        
+        if cached_data_found:
             # Combine train and test data
             X = pd.concat([X_train, X_test], ignore_index=True)
             y = pd.concat([y_train, y_test], ignore_index=True)
