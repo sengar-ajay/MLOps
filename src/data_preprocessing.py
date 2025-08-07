@@ -30,35 +30,40 @@ def load_california_housing_data():
 
     try:
         # Check if we should skip network access (for CI environments)
-        if os.environ.get('SKIP_NETWORK_DOWNLOAD', '').lower() == 'true':
+        if os.environ.get("SKIP_NETWORK_DOWNLOAD", "").lower() == "true":
             raise RuntimeError("Network download disabled by environment variable")
-            
+
         # Try to fetch the dataset from scikit-learn
         housing = fetch_california_housing()
         X = pd.DataFrame(housing.data, columns=housing.feature_names)
         y = pd.Series(housing.target, name="target")
-        
+
         logger.info(f"Dataset loaded successfully. Shape: {X.shape}")
         logger.info(f"Features: {list(X.columns)}")
-        
+
         return X, y
-        
+
     except Exception as e:
         logger.warning(f"Failed to fetch dataset from internet: {e}")
-        
+
         # Try to load from existing processed data files
         # Check both current directory and parent directory (for tests)
         data_dirs = ["data", "../data"]
         cached_data_found = False
-        
+
         for data_dir in data_dirs:
-            if (os.path.exists(os.path.join(data_dir, "X_train.csv")) and 
-                os.path.exists(os.path.join(data_dir, "X_test.csv")) and
-                os.path.exists(os.path.join(data_dir, "y_train.csv")) and 
-                os.path.exists(os.path.join(data_dir, "y_test.csv"))):
-                
-                logger.info(f"Loading dataset from existing processed data files in {data_dir}...")
-                
+            if (
+                os.path.exists(os.path.join(data_dir, "X_train.csv"))
+                and os.path.exists(os.path.join(data_dir, "X_test.csv"))
+                and os.path.exists(os.path.join(data_dir, "y_train.csv"))
+                and os.path.exists(os.path.join(data_dir, "y_test.csv"))
+            ):
+
+                logger.info(
+                    f"Loading dataset from existing processed data files in "
+                    f"{data_dir}..."
+                )
+
                 # Load and combine the split data
                 X_train = pd.read_csv(os.path.join(data_dir, "X_train.csv"))
                 X_test = pd.read_csv(os.path.join(data_dir, "X_test.csv"))
@@ -66,16 +71,16 @@ def load_california_housing_data():
                 y_test = pd.read_csv(os.path.join(data_dir, "y_test.csv")).squeeze()
                 cached_data_found = True
                 break
-        
+
         if cached_data_found:
             # Combine train and test data
             X = pd.concat([X_train, X_test], ignore_index=True)
             y = pd.concat([y_train, y_test], ignore_index=True)
             y.name = "target"
-            
+
             logger.info(f"Dataset loaded from cached files. Shape: {X.shape}")
             logger.info(f"Features: {list(X.columns)}")
-            
+
             return X, y
         else:
             logger.error("No cached data available and cannot fetch from internet")
