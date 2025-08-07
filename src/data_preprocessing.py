@@ -47,17 +47,25 @@ def load_california_housing_data():
         logger.warning(f"Failed to fetch dataset from internet: {e}")
 
         # Try to load from existing processed data files
-        # Check both current directory and parent directory (for tests)
-        data_dirs = ["data", "../data"]
+        # Check multiple possible directories
+        data_dirs = ["data", "../data", "./data", "../../data"]
         cached_data_found = False
 
+        # Debug: print current working directory and file existence
+        logger.info(f"Current working directory: {os.getcwd()}")
+
         for data_dir in data_dirs:
-            if (
-                os.path.exists(os.path.join(data_dir, "X_train.csv"))
-                and os.path.exists(os.path.join(data_dir, "X_test.csv"))
-                and os.path.exists(os.path.join(data_dir, "y_train.csv"))
-                and os.path.exists(os.path.join(data_dir, "y_test.csv"))
-            ):
+            logger.info(f"Checking data directory: {data_dir}")
+            files_needed = ["X_train.csv", "X_test.csv", "y_train.csv", "y_test.csv"]
+            files_exist = []
+
+            for file_name in files_needed:
+                file_path = os.path.join(data_dir, file_name)
+                exists = os.path.exists(file_path)
+                files_exist.append(exists)
+                logger.info(f"  {file_name}: {exists} ({file_path})")
+
+            if all(files_exist):
                 logger.info(
                     f"Loading dataset from existing processed data files in "
                     f"{data_dir}..."
@@ -70,6 +78,8 @@ def load_california_housing_data():
                 y_test = pd.read_csv(os.path.join(data_dir, "y_test.csv")).squeeze()
                 cached_data_found = True
                 break
+            else:
+                logger.info(f"  Not all files found in {data_dir}")
 
         if cached_data_found:
             # Combine train and test data
