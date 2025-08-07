@@ -58,7 +58,6 @@ def load_california_housing_data():
                 and os.path.exists(os.path.join(data_dir, "y_train.csv"))
                 and os.path.exists(os.path.join(data_dir, "y_test.csv"))
             ):
-
                 logger.info(
                     f"Loading dataset from existing processed data files in "
                     f"{data_dir}..."
