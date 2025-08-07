@@ -5,7 +5,6 @@ Unit tests for the Flask API
 import json
 import os
 import sys
-import tempfile
 
 import joblib
 import pandas as pd
@@ -15,8 +14,7 @@ from sklearn.preprocessing import StandardScaler
 
 # Add src directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-
-from api import app, load_model_and_scaler
+from api import app, load_model_and_scaler  # noqa: E402
 
 
 @pytest.fixture

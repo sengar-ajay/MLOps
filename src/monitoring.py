@@ -7,12 +7,11 @@ import logging
 import os
 import time
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import requests
-import seaborn as sns
 
 
 # Set up logging configuration
@@ -309,7 +308,8 @@ def main():
     monitor.generate_report()
 
     print(
-        "Basic monitoring completed. Check logs/ and reports/ directories for detailed results."
+        "Basic monitoring completed. Check logs/ and reports/ directories "
+        "for detailed results."
     )
 
 

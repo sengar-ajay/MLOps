@@ -2,13 +2,11 @@
 Flask API for serving the California Housing price prediction model
 """
 
-import json
 import logging
 import os
 from datetime import datetime
 
 import joblib
-import numpy as np
 import pandas as pd
 from flask import Flask, jsonify, request
 
@@ -329,7 +327,8 @@ def predict_batch():
             return (
                 jsonify(
                     {
-                        "error": 'No instances provided. Expected format: {"instances": [...]}',
+                        "error": "No instances provided. "
+                        'Expected format: {"instances": [...]}',
                         "timestamp": datetime.now().isoformat(),
                     }
                 ),
