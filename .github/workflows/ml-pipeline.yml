@@ -153,8 +153,8 @@ jobs:
           import numpy as np
 
           # Load model metrics
-          if os.path.exists('best_model_metrics.json'):
-              with open('best_model_metrics.json', 'r') as f:
+          if os.path.exists('models/best_model_metrics.json'):
+              with open('models/best_model_metrics.json', 'r') as f:
                   metrics = json.load(f)
               
               print('Model Metrics:')
@@ -203,7 +203,7 @@ jobs:
           path: |
             models/best_model.pkl
             data/scaler.pkl
-            best_model_metrics.json
+            models/best_model_metrics.json
 
       - name: Commit updated model (if on main branch)
         if: github.ref == 'refs/heads/main'
@@ -212,7 +212,7 @@ jobs:
           git config --local user.name "GitHub Action"
 
           if [ -f "models/best_model.pkl" ] && [ -f "data/scaler.pkl" ]; then
-            git add models/best_model.pkl data/scaler.pkl best_model_metrics.json
+            git add models/best_model.pkl data/scaler.pkl models/best_model_metrics.json
             
             if git diff --cached --quiet; then
               echo "No model changes to commit"
@@ -255,14 +255,14 @@ jobs:
 
           # Load current model metrics
           current_metrics = {}
-          if os.path.exists('best_model_metrics.json'):
-              with open('best_model_metrics.json', 'r') as f:
+          if os.path.exists('models/best_model_metrics.json'):
+              with open('models/best_model_metrics.json', 'r') as f:
                   current_metrics = json.load(f)
 
           # Load new model metrics
           new_metrics = {}
-          if os.path.exists('new-model/best_model_metrics.json'):
-              with open('new-model/best_model_metrics.json', 'r') as f:
+          if os.path.exists('new-model/models/best_model_metrics.json'):
+              with open('new-model/models/best_model_metrics.json', 'r') as f:
                   new_metrics = json.load(f)
 
           print('Model Performance Comparison:')
@@ -300,10 +300,10 @@ jobs:
           echo '' >> model-report.md
           echo '## Model Metrics' >> model-report.md
 
-          if [ -f "new-model/best_model_metrics.json" ]; then
+          if [ -f "new-model/models/best_model_metrics.json" ]; then
             python -c "
             import json
-            with open('new-model/best_model_metrics.json', 'r') as f:
+            with open('new-model/models/best_model_metrics.json', 'r') as f:
                 metrics = json.load(f)
             
             for key, value in metrics.items():
