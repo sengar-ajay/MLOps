@@ -54,25 +54,25 @@ jobs:
             echo "Bandit scan completed"
             # Show high and medium severity issues
             python -c "
-            import json
-            with open('bandit-report.json', 'r') as f:
-                data = json.load(f)
-            
-            results = data.get('results', [])
-            high_issues = [r for r in results if r['issue_severity'] == 'HIGH']
-            medium_issues = [r for r in results if r['issue_severity'] == 'MEDIUM']
-            
-            if high_issues:
-                print(f'HIGH SEVERITY: {len(high_issues)} issues found')
-                for issue in high_issues:
-                    print(f'  - {issue[\"test_name\"]}: {issue[\"filename\"]}:{issue[\"line_number\"]}')
-            
-            if medium_issues:
-                print(f'MEDIUM SEVERITY: {len(medium_issues)} issues found')
-            
-            if not high_issues and not medium_issues:
-                print('No high or medium severity issues found')
-            "
+          import json
+          with open('bandit-report.json', 'r') as f:
+              data = json.load(f)
+          
+          results = data.get('results', [])
+          high_issues = [r for r in results if r['issue_severity'] == 'HIGH']
+          medium_issues = [r for r in results if r['issue_severity'] == 'MEDIUM']
+          
+          if high_issues:
+              print(f'HIGH SEVERITY: {len(high_issues)} issues found')
+              for issue in high_issues:
+                  print(f'  - {issue[\"test_name\"]}: {issue[\"filename\"]}:{issue[\"line_number\"]}')
+          
+          if medium_issues:
+              print(f'MEDIUM SEVERITY: {len(medium_issues)} issues found')
+          
+          if not high_issues and not medium_issues:
+              print('No high or medium severity issues found')
+          "
           fi
 
       - name: Run Semgrep security analysis
@@ -236,7 +236,7 @@ jobs:
           output: "trivy-results.sarif"
 
       - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: "trivy-results.sarif"
@@ -299,6 +299,7 @@ jobs:
                   return 0
               
               # Generate random test data
+              np.random.seed(42)  # Set seed for reproducibility
               test_data = np.random.rand(n_predictions, 8)
               
               start_time = time.time()
