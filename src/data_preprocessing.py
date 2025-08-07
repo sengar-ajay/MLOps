@@ -21,21 +21,58 @@ logger = logging.getLogger(__name__)
 def load_california_housing_data():
     """
     Load the California Housing dataset from scikit-learn
+    Falls back to cached data if network access fails
 
     Returns:
         tuple: (X, y) features and target
     """
     logger.info("Loading California Housing dataset...")
 
-    # Fetch the dataset
-    housing = fetch_california_housing()
-    X = pd.DataFrame(housing.data, columns=housing.feature_names)
-    y = pd.Series(housing.target, name="target")
-
-    logger.info(f"Dataset loaded successfully. Shape: {X.shape}")
-    logger.info(f"Features: {list(X.columns)}")
-
-    return X, y
+    try:
+        # Check if we should skip network access (for CI environments)
+        if os.environ.get('SKIP_NETWORK_DOWNLOAD', '').lower() == 'true':
+            raise RuntimeError("Network download disabled by environment variable")
+            
+        # Try to fetch the dataset from scikit-learn
+        housing = fetch_california_housing()
+        X = pd.DataFrame(housing.data, columns=housing.feature_names)
+        y = pd.Series(housing.target, name="target")
+        
+        logger.info(f"Dataset loaded successfully. Shape: {X.shape}")
+        logger.info(f"Features: {list(X.columns)}")
+        
+        return X, y
+        
+    except Exception as e:
+        logger.warning(f"Failed to fetch dataset from internet: {e}")
+        
+        # Try to load from existing processed data files
+        if (os.path.exists("data/X_train.csv") and os.path.exists("data/X_test.csv") and
+            os.path.exists("data/y_train.csv") and os.path.exists("data/y_test.csv")):
+            
+            logger.info("Loading dataset from existing processed data files...")
+            
+            # Load and combine the split data
+            X_train = pd.read_csv("data/X_train.csv")
+            X_test = pd.read_csv("data/X_test.csv") 
+            y_train = pd.read_csv("data/y_train.csv").squeeze()
+            y_test = pd.read_csv("data/y_test.csv").squeeze()
+            
+            # Combine train and test data
+            X = pd.concat([X_train, X_test], ignore_index=True)
+            y = pd.concat([y_train, y_test], ignore_index=True)
+            y.name = "target"
+            
+            logger.info(f"Dataset loaded from cached files. Shape: {X.shape}")
+            logger.info(f"Features: {list(X.columns)}")
+            
+            return X, y
+        else:
+            logger.error("No cached data available and cannot fetch from internet")
+            raise RuntimeError(
+                "Cannot load California Housing dataset: network access failed "
+                "and no cached data files found"
+            )
 
 
 def preprocess_data(X, y, test_size=0.2, random_state=42):
