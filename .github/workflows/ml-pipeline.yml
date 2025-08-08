@@ -305,7 +305,7 @@ jobs:
           import json
           with open('new-model/models/best_model_metrics.json', 'r') as f:
               metrics = json.load(f)
-          
+
           for key, value in metrics.items():
               print(f'- **{key}**: {value:.4f}')
           " >> model-report.md
