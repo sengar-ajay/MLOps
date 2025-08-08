@@ -1,5 +1,6 @@
 """
 Basic monitoring and logging setup for the MLOps pipeline
+Enhanced with in-memory database logging
 """
 
 import json
@@ -12,6 +13,9 @@ from typing import Any, Dict
 import matplotlib.pyplot as plt
 import pandas as pd
 import requests
+
+# Import our database logging system
+from database_logging import get_database_logger, setup_database_logging
 
 
 # Set up logging configuration
@@ -41,13 +45,15 @@ def setup_logging(log_level=logging.INFO, log_file="logs/mlops_pipeline.log"):
 class APIMonitor:
     """
     Monitor API performance and health
+    Enhanced with database logging
     """
 
     def __init__(
         self, api_url="http://localhost:5000", log_file="logs/api_monitor.log"
     ):
         self.api_url = api_url
-        self.logger = setup_logging(log_file=log_file)
+        self.logger = setup_database_logging("api_monitor")  # Use database logging
+        self.db_logger = get_database_logger()  # Get database logger instance
         self.metrics = []
 
     def health_check(self) -> Dict[str, Any]:
@@ -78,6 +84,16 @@ class APIMonitor:
                 self.logger.warning(
                     f"Health check failed - Status: {response.status_code}"
                 )
+
+            # Store in database
+            self.db_logger.log_api_metric(
+                endpoint="/health",
+                method="GET",
+                status_code=response.status_code,
+                response_time=response_time,
+                success=response.status_code == 200,
+                response_data=health_data.get("response_data")
+            )
 
             self.metrics.append(health_data)
             return health_data

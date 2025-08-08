@@ -143,23 +143,23 @@ def main():
     logger.info("- Data version control with DVC")
 
     logger.info("\nAvailable endpoints:")
-    logger.info("• Health check: http://localhost:5000/health")
-    logger.info("• Model info: http://localhost:5000/info")
-    logger.info("• Predictions: http://localhost:5000/predict")
-    logger.info("• Batch predictions: http://localhost:5000/predict_batch")
+    logger.info("- Health check: http://localhost:5000/health")
+    logger.info("- Model info: http://localhost:5000/info")
+    logger.info("- Predictions: http://localhost:5000/predict")
+    logger.info("- Batch predictions: http://localhost:5000/predict_batch")
 
     logger.info("\nGenerated artifacts:")
-    logger.info("• Processed data: data/")
-    logger.info("• Trained models: models/")
-    logger.info("• MLflow experiments: mlruns/")
-    logger.info("• API logs: logs/")
-    logger.info("• Monitoring reports: reports/")
+    logger.info("- Processed data: data/")
+    logger.info("- Trained models: models/")
+    logger.info("- MLflow experiments: mlruns/")
+    logger.info("- API logs: logs/")
+    logger.info("- Monitoring reports: reports/")
 
     logger.info("\nNext steps:")
-    logger.info("• Push code to GitHub repository")
-    logger.info("• Set up GitHub Actions secrets for Docker Hub")
-    logger.info("• Deploy to cloud platform (AWS, GCP, Azure)")
-    logger.info("• Set up production monitoring with Prometheus/Grafana")
+    logger.info("- Push code to GitHub repository")
+    logger.info("- Set up GitHub Actions secrets for Docker Hub")
+    logger.info("- Deploy to cloud platform (AWS, GCP, Azure)")
+    logger.info("- Set up production monitoring with Prometheus/Grafana")
 
     return True
 

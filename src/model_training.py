@@ -256,7 +256,7 @@ def save_best_model(models_results, models_dir="models"):
         logger.info(f"\n{metrics['model_name']} ({metrics['model_type']}):")
         logger.info(f"  RMSE: {metrics['rmse']:.4f}")
         logger.info(f"  MAE:  {metrics['mae']:.4f}")
-        logger.info(f"  R²:   {metrics['r2']:.4f}")
+        logger.info(f"  R2:   {metrics['r2']:.4f}")
 
     return best_model, enhanced_best_metrics
 

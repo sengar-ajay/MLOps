@@ -10,11 +10,12 @@ import joblib
 import pandas as pd
 from flask import Flask, jsonify, request
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+# Import database logging
+from database_logging import get_database_logger, setup_database_logging
+
+# Set up database logging
+logger = setup_database_logging(__name__)
+db_logger = get_database_logger()
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -414,6 +415,161 @@ def internal_error(error):
         ),
         500,
     )
+
+
+# Database Logging Query Endpoints
+
+@app.route("/logs", methods=["GET"])
+def get_logs():
+    """
+    Get logs from in-memory database
+    
+    Query parameters:
+    - level: Filter by log level (INFO, WARNING, ERROR, etc.)
+    - module: Filter by module name
+    - limit: Maximum number of records (default: 100, max: 1000)
+    """
+    try:
+        level = request.args.get("level")
+        module = request.args.get("module")
+        limit = min(int(request.args.get("limit", 100)), 1000)  # Cap at 1000
+        
+        logs = db_logger.get_logs(level=level, module=module, limit=limit)
+        
+        return jsonify({
+            "success": True,
+            "logs": logs,
+            "total": len(logs),
+            "filters": {
+                "level": level,
+                "module": module,
+                "limit": limit
+            },
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error retrieving logs: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+
+@app.route("/metrics/api", methods=["GET"])
+def get_api_metrics():
+    """
+    Get API metrics from in-memory database
+    
+    Query parameters:
+    - endpoint: Filter by endpoint
+    - limit: Maximum number of records (default: 100, max: 1000)
+    """
+    try:
+        endpoint = request.args.get("endpoint")
+        limit = min(int(request.args.get("limit", 100)), 1000)
+        
+        metrics = db_logger.get_api_metrics(endpoint=endpoint, limit=limit)
+        
+        return jsonify({
+            "success": True,
+            "metrics": metrics,
+            "total": len(metrics),
+            "filters": {
+                "endpoint": endpoint,
+                "limit": limit
+            },
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error retrieving API metrics: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+
+@app.route("/metrics/models", methods=["GET"])
+def get_model_metrics():
+    """
+    Get model training metrics from in-memory database
+    
+    Query parameters:
+    - limit: Maximum number of records (default: 100, max: 1000)
+    """
+    try:
+        limit = min(int(request.args.get("limit", 100)), 1000)
+        
+        metrics = db_logger.get_model_metrics(limit=limit)
+        
+        return jsonify({
+            "success": True,
+            "metrics": metrics,
+            "total": len(metrics),
+            "filters": {
+                "limit": limit
+            },
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error retrieving model metrics: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+
+@app.route("/database/stats", methods=["GET"])
+def get_database_stats():
+    """
+    Get database statistics including logs count, API metrics summary, etc.
+    """
+    try:
+        stats = db_logger.get_database_stats()
+        
+        return jsonify({
+            "success": True,
+            "statistics": stats,
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error retrieving database stats: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+
+@app.route("/database/clear", methods=["POST"])
+def clear_database():
+    """
+    Clear all data from the in-memory database
+    WARNING: This will delete all logs and metrics!
+    """
+    try:
+        db_logger.clear_database()
+        logger.warning("Database cleared by user request")
+        
+        return jsonify({
+            "success": True,
+            "message": "Database cleared successfully",
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error clearing database: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
 
 
 if __name__ == "__main__":

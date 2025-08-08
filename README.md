@@ -2,34 +2,42 @@
 
 A comprehensive MLOps pipeline implementation featuring data preprocessing, model training, API deployment, monitoring, and CI/CD automation using the California Housing dataset for regression tasks.
 
+> 📚 **Documentation**: Detailed guides and documentation are available in the [`docs/`](docs/) folder.
+
 ## Project Structure
 
 ```
-Assignment/
+MLOps/
 ├── src/                          # Source code
 │   ├── data_preprocessing.py     # Data loading and preprocessing
 │   ├── model_training.py         # ML model training with MLflow
 │   ├── api.py                   # Flask REST API for model serving
-│   └── monitoring.py            # API monitoring and health checks
+│   ├── monitoring.py            # API monitoring and health checks
+│   └── database_logging.py      # In-memory database logging system
 ├── tests/                       # Unit tests
 │   ├── test_api.py             # API endpoint tests
 │   └── test_data_preprocessing.py # Data processing tests
+├── docs/                        # Documentation
+│   ├── README.md               # Documentation index
+│   ├── QUICK_START.md          # Quick setup guide
+│   ├── PROJECT_SETUP_GUIDE.md  # Detailed setup instructions
+│   ├── TESTING_GUIDE.md        # Testing documentation
+│   ├── ASSIGNMENT_SUMMARY.md   # Project summary
+│   └── PIPELINE_STATUS.md      # Pipeline status
+├── postman/                     # API testing
+│   └── Postman_Collection.json # Complete API collection
 ├── data/                        # Processed data (DVC tracked)
 ├── models/                      # Trained models and artifacts
 ├── logs/                        # Application logs
 ├── reports/                     # Monitoring reports and visualizations
 ├── mlruns/                      # MLflow experiment tracking
-├── mlartifacts/                 # MLflow model artifacts
 ├── .github/workflows/           # CI/CD pipeline configuration
-├── docker/                      # Docker configuration files
 ├── requirements.txt             # Python dependencies
 ├── Dockerfile                   # Docker container configuration
 ├── docker-compose.yml           # Multi-container deployment
 ├── run_pipeline.py              # Complete pipeline orchestrator
-├── verify_setup.py              # Setup verification script
-├── cleanup.py                   # Cleanup utility script
-├── demo_api.py                  # API demonstration script
-└── README.md                    # This documentation
+├── test_database_logging.py     # Database logging tests
+└── README.md                    # Main project documentation
 ```
 
 ## Technologies Used
@@ -38,6 +46,7 @@ Assignment/
 - **DVC**: Data version control for dataset versioning
 - **MLflow**: ML experiment tracking, model versioning, and artifact storage
 - **Flask**: REST API for model serving with comprehensive endpoints
+- **SQLite In-Memory Database**: High-performance logging and metrics storage
 - **Docker + Docker Compose**: Containerization and orchestration
 - **GitHub Actions**: CI/CD pipeline automation
 - **scikit-learn**: Machine learning framework (Linear Regression, Random Forest, Gradient Boosting)
@@ -102,25 +111,18 @@ python src/monitoring.py
 pytest tests/ -v
 ```
 
-## API Usage
+## Quick API Usage
 
-The Flask API provides several endpoints for model interaction:
-
-### Health Check
+### Basic Examples
 
 ```bash
+# Health check
 curl http://localhost:5000/health
-```
 
-### Model Information
-
-```bash
+# Model information
 curl http://localhost:5000/info
-```
 
-### Single Prediction
-
-```bash
+# Single prediction
 curl -X POST http://localhost:5000/predict \
   -H "Content-Type: application/json" \
   -d '{
@@ -133,11 +135,8 @@ curl -X POST http://localhost:5000/predict \
     "Latitude": 37.88,
     "Longitude": -122.23
   }'
-```
 
-### Batch Predictions
-
-```bash
+# Batch predictions
 curl -X POST http://localhost:5000/predict_batch \
   -H "Content-Type: application/json" \
   -d '{
@@ -147,6 +146,112 @@ curl -X POST http://localhost:5000/predict_batch \
     ]
   }'
 ```
+
+### Database Logging Queries
+
+```bash
+# Get application logs
+curl http://localhost:5000/logs
+
+# Get error logs only
+curl "http://localhost:5000/logs?level=ERROR&limit=50"
+
+# Get API performance metrics
+curl http://localhost:5000/metrics/api
+
+# Get model training metrics
+curl http://localhost:5000/metrics/models
+
+# Get database statistics
+curl http://localhost:5000/database/stats
+```
+
+## Complete API Documentation
+
+The API provides comprehensive endpoints for model serving, logging queries, and database management.
+
+### Core Endpoints
+
+#### Health & Information
+
+- **GET /** - API home page with basic information
+- **GET /health** - Health check to verify API and model status
+- **GET /info** - Detailed model information and parameters
+
+#### Predictions
+
+- **POST /predict** - Single house price prediction
+- **POST /predict_batch** - Batch predictions for multiple houses
+
+### Database Logging Endpoints
+
+#### Application Logs
+
+- **GET /logs** - Get all application logs
+- **GET /logs?level=ERROR&limit=50** - Filter logs by level
+- **GET /logs?module=**main\*\*\*\* - Filter logs by module
+
+#### API Performance Metrics
+
+- **GET /metrics/api** - Get all API performance metrics
+- **GET /metrics/api?endpoint=/predict&limit=20** - Filter metrics by endpoint
+
+#### Model Training Metrics
+
+- **GET /metrics/models** - Get model training metrics (RMSE, MAE, R2)
+- **GET /metrics/models?limit=10** - Get recent model metrics with limit
+
+#### Database Management
+
+- **GET /database/stats** - Get comprehensive database statistics
+- **POST /database/clear** - Clear all database data (WARNING: Deletes all logs!)
+
+### Query Parameters
+
+- **level**: Filter logs by level (INFO, WARNING, ERROR)
+- **module**: Filter logs by module name
+- **endpoint**: Filter API metrics by specific endpoint
+- **limit**: Limit number of records returned (max 1000)
+
+### Sample API Requests
+
+#### Get Database Statistics
+
+```bash
+curl http://localhost:5000/database/stats
+```
+
+#### Get Error Logs Only
+
+```bash
+curl "http://localhost:5000/logs?level=ERROR&limit=50"
+```
+
+#### Get Prediction Endpoint Performance
+
+```bash
+curl "http://localhost:5000/metrics/api?endpoint=/predict&limit=20"
+```
+
+### Postman Collection
+
+A complete Postman collection with all 18 endpoints is available at:
+`postman/Postman_Collection.json`
+
+**Features:**
+
+- Automated test scripts for each endpoint
+- Request/response validation
+- Error handling tests
+- Sample data for all prediction endpoints
+- Database query examples
+
+**To use:**
+
+1. Import `postman/Postman_Collection.json` into Postman
+2. Set base_url variable to `http://localhost:5000`
+3. Start the API server: `python src/api.py`
+4. Run individual requests or the entire collection
 
 ## Docker Deployment
 
@@ -209,11 +314,14 @@ pytest tests/test_data_preprocessing.py -v
 
 ## Monitoring
 
-The pipeline includes comprehensive monitoring:
+The pipeline includes comprehensive monitoring with in-memory database storage:
 
 - **API Health Monitoring**: Automated health checks and performance metrics
 - **Response Time Tracking**: API endpoint performance analysis
 - **Success Rate Monitoring**: Request success/failure rate tracking
+- **Database Logging**: All logs and metrics stored in high-performance in-memory SQLite database
+- **Query Interface**: REST API endpoints to query logs, API metrics, and model metrics
+- **Real-time Statistics**: Live database statistics and performance summaries
 - **Automated Reporting**: Visual reports generated in `reports/` directory
 
 ## Cleanup
@@ -261,6 +369,16 @@ python cleanup.py
 - Automated report generation
 - Visual performance analytics
 
+## Documentation
+
+Comprehensive documentation is available in the [`docs/`](docs/) folder:
+
+- **[Quick Start Guide](docs/QUICK_START.md)** - Get up and running quickly
+- **[Project Setup Guide](docs/PROJECT_SETUP_GUIDE.md)** - Detailed setup instructions
+- **[Testing Guide](docs/TESTING_GUIDE.md)** - Complete testing documentation
+- **[Assignment Summary](docs/ASSIGNMENT_SUMMARY.md)** - Project requirements and implementation
+- **[Pipeline Status](docs/PIPELINE_STATUS.md)** - Current pipeline status
+
 ## Contributing
 
 1. Fork the repository
@@ -269,9 +387,7 @@ python cleanup.py
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-
-## ML Flow pipline 
-
+## ML Flow pipline
 
 <img width="1604" height="784" alt="image" src="https://github.com/user-attachments/assets/29bfd73a-94e2-4fee-aa0e-3aa4f991e223" />
 
@@ -279,6 +395,3 @@ python cleanup.py
 <img width="1724" height="837" alt="image" src="https://github.com/user-attachments/assets/05537200-e34d-4db3-a5f2-395b4593d2cb" />
 <img width="1724" height="837" alt="image" src="https://github.com/user-attachments/assets/ebae35c4-44b3-478c-b7f8-c6dbfdfa0f2b" />
 <img width="1724" height="837" alt="image" src="https://github.com/user-attachments/assets/2f31ad66-07b9-414c-ad70-cffd9bf6f867" />
-
-
-
