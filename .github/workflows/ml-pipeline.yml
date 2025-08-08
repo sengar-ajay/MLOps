@@ -14,12 +14,12 @@ on:
       retrain_model:
         description: "Force model retraining"
         required: false
-        default: "false"
+        default: false
         type: boolean
       data_validation_only:
         description: "Run data validation only"
         required: false
-        default: "false"
+        default: false
         type: boolean
   push:
     paths:
@@ -316,7 +316,7 @@ jobs:
                       print(f'  New:     {new_val:.6f}')
                       print(f'  Status:  {status} ({improvement:+.6f})')
                       print()
-          
+
           print('=' * 80)
           "
 
