@@ -195,27 +195,30 @@ def save_best_model(models_results, models_dir="models"):
     # Save individual model metrics for comparison
     all_models_metrics = []
     model_names = ["Linear_Regression", "Random_Forest", "Gradient_Boosting"]
-    
+
     for i, (model, metrics) in enumerate(models_results):
         model_name = model_names[i] if i < len(model_names) else f"Model_{i+1}"
-        
+
         # Add model name and type to metrics
         enhanced_metrics = {
             "model_name": model_name,
             "model_type": type(model).__name__,
-            **metrics
+            **metrics,
         }
         all_models_metrics.append(enhanced_metrics)
-        
+
         # Save individual model
-        individual_model_path = os.path.join(models_dir, f"{model_name.lower()}_model.pkl")
+        individual_model_path = os.path.join(
+            models_dir, f"{model_name.lower()}_model.pkl"
+        )
         joblib.dump(model, individual_model_path)
         logger.info(f"Saved {model_name} to {individual_model_path}")
 
     # Save all models comparison data
     comparison_path = os.path.join(models_dir, "all_models_comparison.json")
-    with open(comparison_path, 'w') as f:
+    with open(comparison_path, "w") as f:
         import json
+
         json.dump(all_models_metrics, f, indent=2)
     logger.info(f"All models comparison saved to {comparison_path}")
 
@@ -232,13 +235,14 @@ def save_best_model(models_results, models_dir="models"):
         **best_metrics,
         "best_model_name": best_model_name,
         "best_model_type": type(best_model).__name__,
-        "training_timestamp": pd.Timestamp.now().isoformat()
+        "training_timestamp": pd.Timestamp.now().isoformat(),
     }
 
     # Save enhanced metrics
     metrics_path = os.path.join(models_dir, "best_model_metrics.json")
-    with open(metrics_path, 'w') as f:
+    with open(metrics_path, "w") as f:
         import json
+
         json.dump(enhanced_best_metrics, f, indent=2)
 
     logger.info(f"Best model ({best_model_name}) saved to {model_path}")
@@ -248,11 +252,11 @@ def save_best_model(models_results, models_dir="models"):
     )
 
     # Print detailed comparison
-    logger.info("\n" + "="*60)
+    logger.info("\n" + "=" * 60)
     logger.info("DETAILED MODEL COMPARISON")
-    logger.info("="*60)
-    
-    for metrics in sorted(all_models_metrics, key=lambda x: x['rmse']):
+    logger.info("=" * 60)
+
+    for metrics in sorted(all_models_metrics, key=lambda x: x["rmse"]):
         logger.info(f"\n{metrics['model_name']} ({metrics['model_type']}):")
         logger.info(f"  RMSE: {metrics['rmse']:.4f}")
         logger.info(f"  MAE:  {metrics['mae']:.4f}")

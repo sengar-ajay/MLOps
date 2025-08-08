@@ -419,11 +419,12 @@ def internal_error(error):
 
 # Database Logging Query Endpoints
 
+
 @app.route("/logs", methods=["GET"])
 def get_logs():
     """
     Get logs from in-memory database
-    
+
     Query parameters:
     - level: Filter by log level (INFO, WARNING, ERROR, etc.)
     - module: Filter by module name
@@ -433,35 +434,38 @@ def get_logs():
         level = request.args.get("level")
         module = request.args.get("module")
         limit = min(int(request.args.get("limit", 100)), 1000)  # Cap at 1000
-        
+
         logs = db_logger.get_logs(level=level, module=module, limit=limit)
-        
-        return jsonify({
-            "success": True,
-            "logs": logs,
-            "total": len(logs),
-            "filters": {
-                "level": level,
-                "module": module,
-                "limit": limit
-            },
-            "timestamp": datetime.now().isoformat()
-        })
-        
+
+        return jsonify(
+            {
+                "success": True,
+                "logs": logs,
+                "total": len(logs),
+                "filters": {"level": level, "module": module, "limit": limit},
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+
     except Exception as e:
         logger.error(f"Error retrieving logs: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        }), 500
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            ),
+            500,
+        )
 
 
 @app.route("/metrics/api", methods=["GET"])
 def get_api_metrics():
     """
     Get API metrics from in-memory database
-    
+
     Query parameters:
     - endpoint: Filter by endpoint
     - limit: Maximum number of records (default: 100, max: 1000)
@@ -469,59 +473,68 @@ def get_api_metrics():
     try:
         endpoint = request.args.get("endpoint")
         limit = min(int(request.args.get("limit", 100)), 1000)
-        
+
         metrics = db_logger.get_api_metrics(endpoint=endpoint, limit=limit)
-        
-        return jsonify({
-            "success": True,
-            "metrics": metrics,
-            "total": len(metrics),
-            "filters": {
-                "endpoint": endpoint,
-                "limit": limit
-            },
-            "timestamp": datetime.now().isoformat()
-        })
-        
+
+        return jsonify(
+            {
+                "success": True,
+                "metrics": metrics,
+                "total": len(metrics),
+                "filters": {"endpoint": endpoint, "limit": limit},
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+
     except Exception as e:
         logger.error(f"Error retrieving API metrics: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        }), 500
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            ),
+            500,
+        )
 
 
 @app.route("/metrics/models", methods=["GET"])
 def get_model_metrics():
     """
     Get model training metrics from in-memory database
-    
+
     Query parameters:
     - limit: Maximum number of records (default: 100, max: 1000)
     """
     try:
         limit = min(int(request.args.get("limit", 100)), 1000)
-        
+
         metrics = db_logger.get_model_metrics(limit=limit)
-        
-        return jsonify({
-            "success": True,
-            "metrics": metrics,
-            "total": len(metrics),
-            "filters": {
-                "limit": limit
-            },
-            "timestamp": datetime.now().isoformat()
-        })
-        
+
+        return jsonify(
+            {
+                "success": True,
+                "metrics": metrics,
+                "total": len(metrics),
+                "filters": {"limit": limit},
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+
     except Exception as e:
         logger.error(f"Error retrieving model metrics: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        }), 500
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            ),
+            500,
+        )
 
 
 @app.route("/database/stats", methods=["GET"])
@@ -531,20 +544,27 @@ def get_database_stats():
     """
     try:
         stats = db_logger.get_database_stats()
-        
-        return jsonify({
-            "success": True,
-            "statistics": stats,
-            "timestamp": datetime.now().isoformat()
-        })
-        
+
+        return jsonify(
+            {
+                "success": True,
+                "statistics": stats,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+
     except Exception as e:
         logger.error(f"Error retrieving database stats: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        }), 500
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            ),
+            500,
+        )
 
 
 @app.route("/database/clear", methods=["POST"])
@@ -556,20 +576,27 @@ def clear_database():
     try:
         db_logger.clear_database()
         logger.warning("Database cleared by user request")
-        
-        return jsonify({
-            "success": True,
-            "message": "Database cleared successfully",
-            "timestamp": datetime.now().isoformat()
-        })
-        
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Database cleared successfully",
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+
     except Exception as e:
         logger.error(f"Error clearing database: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        }), 500
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            ),
+            500,
+        )
 
 
 if __name__ == "__main__":

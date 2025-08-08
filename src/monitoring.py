@@ -92,7 +92,7 @@ class APIMonitor:
                 status_code=response.status_code,
                 response_time=response_time,
                 success=response.status_code == 200,
-                response_data=health_data.get("response_data")
+                response_data=health_data.get("response_data"),
             )
 
             self.metrics.append(health_data)
