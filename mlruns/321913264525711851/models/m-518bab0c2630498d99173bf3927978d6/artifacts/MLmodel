@@ -1,0 +1,22 @@
+artifact_path: file:///Users/asengar/Learning/Course/MTech/Sem%203/MLOps/MLOps/mlruns/321913264525711851/models/m-518bab0c2630498d99173bf3927978d6/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.10.18
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.5.2
+mlflow_version: 3.1.4
+model_id: m-518bab0c2630498d99173bf3927978d6
+model_size_bytes: 708
+model_uuid: m-518bab0c2630498d99173bf3927978d6
+prompts: null
+run_id: a7245dd5e0b04b709e2cad8976464e2b
+utc_time_created: '2025-08-07 07:37:08.023713'

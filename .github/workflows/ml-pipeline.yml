@@ -14,12 +14,12 @@ on:
       retrain_model:
         description: "Force model retraining"
         required: false
-        default: "false"
+        default: false
         type: boolean
       data_validation_only:
         description: "Run data validation only"
         required: false
-        default: "false"
+        default: false
         type: boolean
   push:
     paths:
@@ -202,8 +202,12 @@ jobs:
           name: trained-model-${{ github.run_number }}
           path: |
             models/best_model.pkl
+            models/linear_regression_model.pkl
+            models/random_forest_model.pkl
+            models/gradient_boosting_model.pkl
             data/scaler.pkl
             models/best_model_metrics.json
+            models/all_models_comparison.json
 
       - name: Commit updated model (if on main branch)
         if: github.ref == 'refs/heads/main'
@@ -212,7 +216,7 @@ jobs:
           git config --local user.name "GitHub Action"
 
           if [ -f "models/best_model.pkl" ] && [ -f "data/scaler.pkl" ]; then
-            git add models/best_model.pkl data/scaler.pkl models/best_model_metrics.json
+            git add models/best_model.pkl models/*_model.pkl data/scaler.pkl models/best_model_metrics.json models/all_models_comparison.json
             
             if git diff --cached --quiet; then
               echo "No model changes to commit"
@@ -253,63 +257,128 @@ jobs:
           import json
           import os
 
-          # Load current model metrics
+          print('=' * 80)
+          print('COMPREHENSIVE MODEL TRAINING & COMPARISON REPORT')
+          print('=' * 80)
+
+          # Load new comprehensive model comparison
+          if os.path.exists('new-model/models/all_models_comparison.json'):
+              with open('new-model/models/all_models_comparison.json', 'r') as f:
+                  all_models = json.load(f)
+              
+              print('\n📊 INDIVIDUAL MODEL PERFORMANCE:')
+              print('-' * 50)
+              
+              # Sort models by RMSE (best to worst)
+              sorted_models = sorted(all_models, key=lambda x: x['rmse'])
+              
+              for i, model in enumerate(sorted_models):
+                  rank = '🥇' if i == 0 else '🥈' if i == 1 else '🥉' if i == 2 else f'{i+1}.'
+                  print(f'\n{rank} {model[\"model_name\"]} ({model[\"model_type\"]}):')
+                  print(f'   RMSE: {model[\"rmse"]:.6f}')
+                  print(f'   MAE:  {model[\"mae\"]:.6f}')
+                  print(f'   R²:   {model[\"r2\"]:.6f}')
+              
+              print(f'\n🏆 BEST MODEL: {sorted_models[0][\"model_name\"]}')
+              print(f'   Performance: RMSE={sorted_models[0][\"rmse\"]:.6f}, R²={sorted_models[0][\"r2\"]:.6f}')
+
+          # Load current vs new comparison
           current_metrics = {}
           if os.path.exists('models/best_model_metrics.json'):
               with open('models/best_model_metrics.json', 'r') as f:
                   current_metrics = json.load(f)
 
-          # Load new model metrics
           new_metrics = {}
           if os.path.exists('new-model/models/best_model_metrics.json'):
               with open('new-model/models/best_model_metrics.json', 'r') as f:
                   new_metrics = json.load(f)
 
-          print('Model Performance Comparison:')
-          print('=' * 50)
+          if current_metrics and new_metrics:
+              print(f'\n📈 BEST MODEL COMPARISON (Current vs New):')
+              print('-' * 50)
+              
+              metrics_to_compare = ['rmse', 'mae', 'r2']
+              
+              for metric in metrics_to_compare:
+                  if metric in current_metrics and metric in new_metrics:
+                      current_val = current_metrics[metric]
+                      new_val = new_metrics[metric]
+                      
+                      if metric == 'r2':  # Higher is better
+                          improvement = new_val - current_val
+                          status = '📈 IMPROVED' if improvement > 0 else '📉 DEGRADED' if improvement < 0 else '➡️ UNCHANGED'
+                      else:  # Lower is better (RMSE, MAE)
+                          improvement = current_val - new_val
+                          status = '📈 IMPROVED' if improvement > 0 else '📉 DEGRADED' if improvement < 0 else '➡️ UNCHANGED'
+                      
+                      print(f'{metric.upper()}:')
+                      print(f'  Current: {current_val:.6f}')
+                      print(f'  New:     {new_val:.6f}')
+                      print(f'  Status:  {status} ({improvement:+.6f})')
+                      print()
 
-          metrics_to_compare = ['test_r2_score', 'test_rmse', 'test_mae']
-
-          for metric in metrics_to_compare:
-              if metric in current_metrics and metric in new_metrics:
-                  current_val = current_metrics[metric]
-                  new_val = new_metrics[metric]
-                  
-                  if metric == 'test_r2_score':  # Higher is better
-                      improvement = new_val - current_val
-                      status = 'IMPROVED' if improvement > 0 else 'DEGRADED' if improvement < 0 else 'UNCHANGED'
-                  else:  # Lower is better (RMSE, MAE)
-                      improvement = current_val - new_val
-                      status = 'IMPROVED' if improvement > 0 else 'DEGRADED' if improvement < 0 else 'UNCHANGED'
-                  
-                  print(f'{metric}:')
-                  print(f'  Current: {current_val:.4f}')
-                  print(f'  New:     {new_val:.4f}')
-                  print(f'  Change:  {status} {improvement:+.4f}')
-                  print()
+          print('=' * 80)
           "
 
       - name: Generate model report
         run: |
-          echo '# Model Training Report' > model-report.md
+          echo '# Comprehensive Model Training Report' > model-report.md
           echo '' >> model-report.md
           echo '## Training Summary' >> model-report.md
           echo '- **Trigger**: ${{ github.event_name }}' >> model-report.md
           echo '- **Timestamp**: '$(date -u) >> model-report.md
           echo '- **Commit**: ${{ github.sha }}' >> model-report.md
           echo '' >> model-report.md
-          echo '## Model Metrics' >> model-report.md
 
+          # Individual Models Performance
+          if [ -f "new-model/models/all_models_comparison.json" ]; then
+            echo '## Individual Model Performance' >> model-report.md
+            echo '' >> model-report.md
+            python -c "
+          import json
+          with open('new-model/models/all_models_comparison.json', 'r') as f:
+              all_models = json.load(f)
+
+          # Sort by RMSE (best first)
+          sorted_models = sorted(all_models, key=lambda x: x['rmse'])
+
+          for i, model in enumerate(sorted_models):
+              rank = '🥇 ' if i == 0 else '🥈 ' if i == 1 else '🥉 ' if i == 2 else f'{i+1}. '
+              print(f'### {rank}{model[\"model_name\"]} ({model[\"model_type\"]})')
+              print(f'- **RMSE**: {model[\"rmse\"]:.6f}')
+              print(f'- **MAE**: {model[\"mae\"]:.6f}')
+              print(f'- **R² Score**: {model[\"r2\"]:.6f}')
+              print('')
+          " >> model-report.md
+          fi
+
+          # Best Model Details
+          echo '## Best Model Details' >> model-report.md
+          echo '' >> model-report.md
           if [ -f "new-model/models/best_model_metrics.json" ]; then
             python -c "
           import json
           with open('new-model/models/best_model_metrics.json', 'r') as f:
               metrics = json.load(f)
 
+          print(f'**Selected Model**: {metrics.get(\"best_model_name\", \"Unknown\")} ({metrics.get(\"best_model_type\", \"Unknown\")})')
+          print('')
+          print('**Performance Metrics**:')
           for key, value in metrics.items():
-              print(f'- **{key}**: {value:.4f}')
+              if key in ['rmse', 'mae', 'r2']:
+                  print(f'- **{key.upper()}**: {value:.6f}')
+          print('')
+          if 'training_timestamp' in metrics:
+              print(f'**Training Completed**: {metrics[\"training_timestamp\"]}')
           " >> model-report.md
           fi
+
+          echo '' >> model-report.md
+          echo '## Model Artifacts Generated' >> model-report.md
+          echo '- Individual model files for all algorithms' >> model-report.md
+          echo '- Comprehensive comparison data (JSON)' >> model-report.md
+          echo '- Best model selection and preprocessing scaler' >> model-report.md
+          echo '- Detailed performance metrics for analysis' >> model-report.md
 
       - name: Upload model report
         uses: actions/upload-artifact@v4
