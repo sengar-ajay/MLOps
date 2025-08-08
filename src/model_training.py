@@ -181,7 +181,7 @@ def train_gradient_boosting(
 
 def save_best_model(models_results, models_dir="models"):
     """
-    Save the best performing model based on RMSE
+    Save the best performing model based on RMSE and generate comprehensive model comparison
 
     Args:
         models_results: List of (model, metrics) tuples
@@ -189,27 +189,76 @@ def save_best_model(models_results, models_dir="models"):
     """
     logger.info("Selecting and saving best model...")
 
-    # Find best model based on RMSE
-    best_model, best_metrics = min(models_results, key=lambda x: x[1]["rmse"])
-
     # Create models directory
     os.makedirs(models_dir, exist_ok=True)
+
+    # Save individual model metrics for comparison
+    all_models_metrics = []
+    model_names = ["Linear_Regression", "Random_Forest", "Gradient_Boosting"]
+    
+    for i, (model, metrics) in enumerate(models_results):
+        model_name = model_names[i] if i < len(model_names) else f"Model_{i+1}"
+        
+        # Add model name and type to metrics
+        enhanced_metrics = {
+            "model_name": model_name,
+            "model_type": type(model).__name__,
+            **metrics
+        }
+        all_models_metrics.append(enhanced_metrics)
+        
+        # Save individual model
+        individual_model_path = os.path.join(models_dir, f"{model_name.lower()}_model.pkl")
+        joblib.dump(model, individual_model_path)
+        logger.info(f"Saved {model_name} to {individual_model_path}")
+
+    # Save all models comparison data
+    comparison_path = os.path.join(models_dir, "all_models_comparison.json")
+    with open(comparison_path, 'w') as f:
+        import json
+        json.dump(all_models_metrics, f, indent=2)
+    logger.info(f"All models comparison saved to {comparison_path}")
+
+    # Find best model based on RMSE
+    best_model, best_metrics = min(models_results, key=lambda x: x[1]["rmse"])
+    best_model_name = model_names[models_results.index((best_model, best_metrics))]
 
     # Save best model
     model_path = os.path.join(models_dir, "best_model.pkl")
     joblib.dump(best_model, model_path)
 
-    # Save metrics
-    metrics_path = os.path.join(models_dir, "best_model_metrics.json")
-    pd.Series(best_metrics).to_json(metrics_path)
+    # Enhanced best model metrics with additional info
+    enhanced_best_metrics = {
+        **best_metrics,
+        "best_model_name": best_model_name,
+        "best_model_type": type(best_model).__name__,
+        "training_timestamp": pd.Timestamp.now().isoformat()
+    }
 
-    logger.info(f"Best model saved to {model_path}")
+    # Save enhanced metrics
+    metrics_path = os.path.join(models_dir, "best_model_metrics.json")
+    with open(metrics_path, 'w') as f:
+        import json
+        json.dump(enhanced_best_metrics, f, indent=2)
+
+    logger.info(f"Best model ({best_model_name}) saved to {model_path}")
     logger.info(
         f"Best model metrics: RMSE: {best_metrics['rmse']:.4f}, "
         f"MAE: {best_metrics['mae']:.4f}, R2: {best_metrics['r2']:.4f}"
     )
 
-    return best_model, best_metrics
+    # Print detailed comparison
+    logger.info("\n" + "="*60)
+    logger.info("DETAILED MODEL COMPARISON")
+    logger.info("="*60)
+    
+    for metrics in sorted(all_models_metrics, key=lambda x: x['rmse']):
+        logger.info(f"\n{metrics['model_name']} ({metrics['model_type']}):")
+        logger.info(f"  RMSE: {metrics['rmse']:.4f}")
+        logger.info(f"  MAE:  {metrics['mae']:.4f}")
+        logger.info(f"  R²:   {metrics['r2']:.4f}")
+
+    return best_model, enhanced_best_metrics
 
 
 def main():
