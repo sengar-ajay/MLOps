@@ -17,7 +17,7 @@ class InMemoryDatabaseLogger:
     Thread-safe implementation for concurrent access
     """
 
-    def __init__(self, db_name=":memory:"):
+    def __init__(self, db_name="database/mlops_logs.db"):
         """
         Initialize in-memory database for logging
 

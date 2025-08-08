@@ -1,0 +1,11 @@
+{
+  "total_requests": 1,
+  "average_response_time": 0.010400056838989258,
+  "max_response_time": 0.010400056838989258,
+  "min_response_time": 0.010400056838989258,
+  "success_rate": 1.0,
+  "monitoring_period": {
+    "start": "2025-08-09T00:17:49.204238",
+    "end": "2025-08-09T00:17:49.204238"
+  }
+}
