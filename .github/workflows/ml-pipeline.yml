@@ -26,6 +26,7 @@ on:
       - "src/model_training.py"
       - "src/data_preprocessing.py"
       - "data/**"
+      - "triggers/*.trigger"
 
 jobs:
   data-validation:

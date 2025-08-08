@@ -8,7 +8,7 @@ All emoji and special characters have been removed from the Python codebase to e
 
 ### 1. test_database_logging.py
 
-- Removed all emoji characters (🔧, 📝, 🤖, ✅, ❌, 🚀, 🌟, 📊, 🔍, ⚡, 🧵, 📈, 🔄, 🎯, 🧹, 🔗, 💡, 🎉, ⚠️, 🌐, 📋)
+- Removed all emoji characters (, , , , , , , , , , , , , , , , , , , , )
 - Replaced markdown-style bold formatting (**text**) with plain text
 - Maintained all functionality while improving readability
 
@@ -32,7 +32,7 @@ All emoji and special characters have been removed from the Python codebase to e
 ### Before:
 
 ```python
-print("🔧 Testing In-Memory Database Logging System")
+print(" Testing In-Memory Database Logging System")
 print(f"RMSE: {metric['rmse']:.4f}, R²: {metric['r2_score']:.4f}")
 logger.info("• Health check: http://localhost:5000/health")
 ```

@@ -12,8 +12,7 @@ MLOps/
 │   ├── data_preprocessing.py     # Data loading and preprocessing
 │   ├── model_training.py         # ML model training with MLflow
 │   ├── api.py                   # Flask REST API for model serving
-│   ├── monitoring.py            # API monitoring and health checks
-│   └── database_logging.py      # In-memory database logging system
+│   └── monitoring.py            # API monitoring and health checks
 ├── tests/                       # Unit tests
 │   ├── test_api.py             # API endpoint tests
 │   └── test_data_preprocessing.py # Data processing tests
@@ -36,7 +35,6 @@ MLOps/
 ├── Dockerfile                   # Docker container configuration
 ├── docker-compose.yml           # Multi-container deployment
 ├── run_pipeline.py              # Complete pipeline orchestrator
-├── test_database_logging.py     # Database logging tests
 └── README.md                    # Main project documentation
 ```
 
@@ -46,7 +44,7 @@ MLOps/
 - **DVC**: Data version control for dataset versioning
 - **MLflow**: ML experiment tracking, model versioning, and artifact storage
 - **Flask**: REST API for model serving with comprehensive endpoints
-- **SQLite In-Memory Database**: High-performance logging and metrics storage
+
 - **Docker + Docker Compose**: Containerization and orchestration
 - **GitHub Actions**: CI/CD pipeline automation
 - **scikit-learn**: Machine learning framework (Linear Regression, Random Forest, Gradient Boosting)
@@ -147,32 +145,13 @@ curl -X POST http://localhost:5000/predict_batch \
   }'
 ```
 
-### Database Logging Queries
+## API Documentation
 
-```bash
-# Get application logs
-curl http://localhost:5000/logs
+The API provides endpoints for model serving and health monitoring.
 
-# Get error logs only
-curl "http://localhost:5000/logs?level=ERROR&limit=50"
+### Available Endpoints
 
-# Get API performance metrics
-curl http://localhost:5000/metrics/api
-
-# Get model training metrics
-curl http://localhost:5000/metrics/models
-
-# Get database statistics
-curl http://localhost:5000/database/stats
-```
-
-## Complete API Documentation
-
-The API provides comprehensive endpoints for model serving, logging queries, and database management.
-
-### Core Endpoints
-
-#### Health & Information
+#### Core Endpoints
 
 - **GET /** - API home page with basic information
 - **GET /health** - Health check to verify API and model status
@@ -182,44 +161,6 @@ The API provides comprehensive endpoints for model serving, logging queries, and
 
 - **POST /predict** - Single house price prediction
 - **POST /predict_batch** - Batch predictions for multiple houses
-
-### Database Logging Endpoints
-
-#### Application Logs
-
-- **GET /logs** - Get all application logs
-- **GET /logs?level=ERROR&limit=50** - Filter logs by level
-- **GET /logs?module=**main\*\*\*\* - Filter logs by module
-
-#### API Performance Metrics
-
-- **GET /metrics/api** - Get all API performance metrics
-- **GET /metrics/api?endpoint=/predict&limit=20** - Filter metrics by endpoint
-
-#### Model Training Metrics
-
-- **GET /metrics/models** - Get model training metrics (RMSE, MAE, R2)
-- **GET /metrics/models?limit=10** - Get recent model metrics with limit
-
-#### Database Management
-
-- **GET /database/stats** - Get comprehensive database statistics
-- **POST /database/clear** - Clear all database data (WARNING: Deletes all logs!)
-
-### Query Parameters
-
-- **level**: Filter logs by level (INFO, WARNING, ERROR)
-- **module**: Filter logs by module name
-- **endpoint**: Filter API metrics by specific endpoint
-- **limit**: Limit number of records returned (max 1000)
-
-### Sample API Requests
-
-#### Get Database Statistics
-
-```bash
-curl http://localhost:5000/database/stats
-```
 
 #### Get Error Logs Only
 
@@ -314,14 +255,11 @@ pytest tests/test_data_preprocessing.py -v
 
 ## Monitoring
 
-The pipeline includes comprehensive monitoring with in-memory database storage:
+The pipeline includes comprehensive monitoring:
 
 - **API Health Monitoring**: Automated health checks and performance metrics
 - **Response Time Tracking**: API endpoint performance analysis
 - **Success Rate Monitoring**: Request success/failure rate tracking
-- **Database Logging**: All logs and metrics stored in high-performance in-memory SQLite database
-- **Query Interface**: REST API endpoints to query logs, API metrics, and model metrics
-- **Real-time Statistics**: Live database statistics and performance summaries
 - **Automated Reporting**: Visual reports generated in `reports/` directory
 
 ## Cleanup
