@@ -3,16 +3,17 @@ Data Monitoring and Model Retraining Trigger System
 Monitors data drift, performance degradation, and triggers retraining
 """
 
-import os
 import json
 import logging
+import os
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Tuple
+
+import joblib
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
-from typing import Dict, List, Tuple, Optional
 from scipy import stats
-import joblib
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from database_logging import get_database_logger, setup_database_logging
 

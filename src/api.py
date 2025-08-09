@@ -10,19 +10,20 @@ from typing import List, Optional
 import joblib
 import pandas as pd
 from flask import Flask, jsonify, request
-from pydantic import BaseModel, ValidationError, Field
 from prometheus_client import (
-    Counter,
-    Histogram,
-    Gauge,
-    generate_latest,
     CONTENT_TYPE_LATEST,
+    Counter,
+    Gauge,
+    Histogram,
+    generate_latest,
 )
 from prometheus_flask_exporter import PrometheusMetrics
+from pydantic import BaseModel, Field, ValidationError
+
+from data_monitoring import RetrainingTrigger
 
 # Import database logging
 from database_logging import get_database_logger, setup_database_logging
-from data_monitoring import RetrainingTrigger
 
 # Set up database logging
 logger = setup_database_logging(__name__)
@@ -51,7 +52,7 @@ class HousingFeatures(BaseModel):
     Longitude: float = Field(..., ge=-125, le=-114, description="Block group longitude")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "MedInc": 8.3252,
                 "HouseAge": 41.0,
@@ -282,12 +283,11 @@ def get_schema():
         return jsonify(
             {
                 "schema": {
-                    "HousingFeatures": HousingFeatures.schema(),
-                    "BatchPredictionRequest": BatchPredictionRequest.schema(),
+                    "HousingFeatures": HousingFeatures.model_json_schema(),
+                    "BatchPredictionRequest": BatchPredictionRequest.model_json_schema(),
                 },
-                "example": HousingFeatures.schema()["example"]
-                if "example" in HousingFeatures.schema()
-                else HousingFeatures.Config.schema_extra["example"],
+                "example": HousingFeatures.model_json_schema().get("example")
+                or HousingFeatures.Config.json_schema_extra["example"],
                 "timestamp": datetime.now().isoformat(),
             }
         )
@@ -370,7 +370,7 @@ def predict():
         # Validate input using Pydantic
         try:
             validated_input = HousingFeatures(**data)
-            logger.info(f"Prediction request validated: {validated_input.dict()}")
+            logger.info(f"Prediction request validated: {validated_input.model_dump()}")
         except ValidationError as e:
             validation_errors_list = []
             for error in e.errors():
@@ -408,15 +408,18 @@ def predict():
             )
 
         # Prepare input data using validated input
-        input_dict = validated_input.dict()
+        input_dict = validated_input.model_dump()
         input_data = pd.DataFrame([input_dict])[feature_names]
 
-        # Scale the input
+        # Scale the input (ensure column names are preserved)
         input_scaled = scaler.transform(input_data)
+
+        # Convert to DataFrame to preserve feature names for the model
+        input_scaled_df = pd.DataFrame(input_scaled, columns=feature_names)
 
         # Make prediction with timing
         with prediction_duration.time():
-            prediction = model.predict(input_scaled)[0]
+            prediction = model.predict(input_scaled_df)[0]
 
         # Calculate response time
         response_time = (datetime.now() - start_time).total_seconds()
@@ -545,8 +548,11 @@ def predict_batch():
         # Scale the input
         input_scaled = scaler.transform(input_df)
 
+        # Convert to DataFrame to preserve feature names for the model
+        input_scaled_df = pd.DataFrame(input_scaled, columns=feature_names)
+
         # Make predictions
-        predictions = model.predict(input_scaled).tolist()
+        predictions = model.predict(input_scaled_df).tolist()
 
         logger.info(f"Batch prediction made for {len(instances)} instances")
 
