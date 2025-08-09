@@ -279,6 +279,12 @@ def main():
     # Load processed data
     X_train, X_test, y_train, y_test, scaler = load_processed_data()
 
+    # Configure MLflow for CI environment
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
+    if tracking_uri:
+        mlflow.set_tracking_uri(tracking_uri)
+        logger.info(f"MLflow tracking URI set to: {tracking_uri}")
+    
     # Set MLflow experiment
     mlflow.set_experiment("California_Housing_Regression")
 
