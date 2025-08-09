@@ -1,0 +1,14 @@
+artifact_uri: file:///tmp/mlruns_symlink/mlruns/321913264525711851/ce8eda01847d43c4ad1f562da004651b/artifacts
+end_time: 1754747944044
+entry_point_name: ''
+experiment_id: '321913264525711851'
+lifecycle_stage: active
+run_id: ce8eda01847d43c4ad1f562da004651b
+run_name: Linear_Regression
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754747941068
+status: 3
+tags: []
+user_id: asengar

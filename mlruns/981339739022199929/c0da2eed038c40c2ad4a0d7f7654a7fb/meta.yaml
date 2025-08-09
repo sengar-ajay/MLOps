@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/asengar/Learning/Course/MTech/Sem 3/MLOps/MLOps/mlartifacts/981339739022199929/c0da2eed038c40c2ad4a0d7f7654a7fb/artifacts
+end_time: 1754761438592
+entry_point_name: ''
+experiment_id: '981339739022199929'
+lifecycle_stage: active
+run_id: c0da2eed038c40c2ad4a0d7f7654a7fb
+run_name: Fixed_Linear_Regression
+run_uuid: c0da2eed038c40c2ad4a0d7f7654a7fb
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754761438379
+status: 3
+tags: []
+user_id: asengar

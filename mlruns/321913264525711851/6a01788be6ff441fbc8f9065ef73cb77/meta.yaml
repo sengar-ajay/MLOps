@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/asengar/Learning/Course/MTech/Sem%203/MLOps/MLOps/mlruns/321913264525711851/6a01788be6ff441fbc8f9065ef73cb77/artifacts
+end_time: 1754766537999
+entry_point_name: ''
+experiment_id: '321913264525711851'
+lifecycle_stage: active
+run_id: 6a01788be6ff441fbc8f9065ef73cb77
+run_name: Random_Forest
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754766530205
+status: 3
+tags: []
+user_id: asengar

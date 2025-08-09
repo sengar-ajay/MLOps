@@ -1,0 +1,16 @@
+artifact_uri: file:///Users/asengar/Learning/Course/MTech/Sem 3/MLOps/MLOps/mlartifacts/715743960961299759/aa650591eecb46b8ab25df4d10407806/artifacts
+deleted_time: 1754761119576
+end_time: 1754760787903
+entry_point_name: ''
+experiment_id: '715743960961299759'
+lifecycle_stage: deleted
+run_id: aa650591eecb46b8ab25df4d10407806
+run_name: Demo_Linear_Regression
+run_uuid: aa650591eecb46b8ab25df4d10407806
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754760787718
+status: 4
+tags: []
+user_id: asengar

@@ -1,0 +1,14 @@
+artifact_uri: file:///tmp/mlruns_symlink/mlruns/321913264525711851/42f372efdf1b46308cb4e946f688b34e/artifacts
+end_time: 1754747951537
+entry_point_name: ''
+experiment_id: '321913264525711851'
+lifecycle_stage: active
+run_id: 42f372efdf1b46308cb4e946f688b34e
+run_name: Random_Forest
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754747944046
+status: 3
+tags: []
+user_id: asengar

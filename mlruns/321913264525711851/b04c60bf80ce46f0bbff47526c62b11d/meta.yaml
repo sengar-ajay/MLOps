@@ -1,0 +1,14 @@
+artifact_uri: file:///tmp/mlruns_symlink/mlruns/321913264525711851/b04c60bf80ce46f0bbff47526c62b11d/artifacts
+end_time: 1754747330198
+entry_point_name: ''
+experiment_id: '321913264525711851'
+lifecycle_stage: active
+run_id: b04c60bf80ce46f0bbff47526c62b11d
+run_name: Gradient_Boosting
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754747325065
+status: 3
+tags: []
+user_id: asengar
