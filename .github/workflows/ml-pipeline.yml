@@ -160,9 +160,12 @@ jobs:
               
               print('Model Metrics:')
               for key, value in metrics.items():
-                  if isinstance(value, (int, float)):
-                      print(f'  {key}: {value:.4f}')
-                  else:
+                  try:
+                      # Try to format as float for numeric values
+                      numeric_value = float(value)
+                      print(f'  {key}: {numeric_value:.4f}')
+                  except (ValueError, TypeError):
+                      # For non-numeric values, print as string
                       print(f'  {key}: {value}')
               
               # Validate model performance thresholds
