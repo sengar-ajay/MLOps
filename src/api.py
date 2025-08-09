@@ -21,6 +21,7 @@ from prometheus_flask_exporter import PrometheusMetrics
 from pydantic import BaseModel, Field, ValidationError
 
 from data_monitoring import RetrainingTrigger
+
 # Import database logging
 from database_logging import get_database_logger, setup_database_logging
 
