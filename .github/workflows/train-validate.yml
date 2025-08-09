@@ -11,17 +11,19 @@ jobs:
   train:
     runs-on: ubuntu-latest
     env:
-      MLFLOW_TRACKING_URI: file:${{ github.workspace }}/mlruns
-      MLFLOW_ARTIFACTS_DESTINATION: file:${{ github.workspace }}/mlartifacts
+      MLFLOW_TRACKING_URI: file:${{ github.workspace }}/_mlruns_ci
+      MLFLOW_ARTIFACTS_DESTINATION: file:${{ github.workspace }}/_mlartifacts_ci
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Prepare dirs
-        run: mkdir -p mlruns mlartifacts data models
+      - name: Prepare dirs (fresh MLflow roots)
+        run: |
+          rm -rf mlruns || true
+          mkdir -p _mlruns_ci _mlartifacts_ci data models
       - name: Preprocess + Train
         run: |
           python src/data_preprocessing.py
