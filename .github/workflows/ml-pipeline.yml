@@ -160,7 +160,10 @@ jobs:
               
               print('Model Metrics:')
               for key, value in metrics.items():
-                  print(f'  {key}: {value:.4f}')
+                  if isinstance(value, (int, float)):
+                      print(f'  {key}: {value:.4f}')
+                  else:
+                      print(f'  {key}: {value}')
               
               # Validate model performance thresholds
               if 'test_r2_score' in metrics:
@@ -190,7 +193,7 @@ jobs:
               test_input_scaled = scaler.transform(test_input)
               prediction = model.predict(test_input_scaled)
               
-              print(f'Model prediction test successful: {prediction[0]:.4f}')
+              print(f'Model prediction test successful: {float(prediction[0]):.4f}')
               
           except Exception as e:
               print(f'ERROR: Model loading/prediction failed: {e}')
