@@ -10,19 +10,19 @@ from typing import List, Optional
 import joblib
 import pandas as pd
 from flask import Flask, jsonify, request
-from pydantic import BaseModel, ValidationError, Field
 from prometheus_client import (
-    Counter,
-    Histogram,
-    Gauge,
-    generate_latest,
     CONTENT_TYPE_LATEST,
+    Counter,
+    Gauge,
+    Histogram,
+    generate_latest,
 )
 from prometheus_flask_exporter import PrometheusMetrics
+from pydantic import BaseModel, Field, ValidationError
 
+from data_monitoring import RetrainingTrigger
 # Import database logging
 from database_logging import get_database_logger, setup_database_logging
-from data_monitoring import RetrainingTrigger
 
 # Set up database logging
 logger = setup_database_logging(__name__)
