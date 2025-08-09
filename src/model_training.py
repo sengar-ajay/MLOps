@@ -293,7 +293,7 @@ def main():
     if tracking_uri:
         mlflow.set_tracking_uri(tracking_uri)
         logger.info(f"MLflow tracking URI set to: {tracking_uri}")
-    
+
     # Set MLflow experiment
     mlflow.set_experiment("California_Housing_Regression")
 
