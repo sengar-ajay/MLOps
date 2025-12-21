@@ -3,7 +3,7 @@
     "model_name": "Linear_Regression",
     "model_type": "LinearRegression",
     "rmse": 0.7455813830127763,
-    "mae": 0.5332001304956565,
+    "mae": 0.5332001304956566,
     "r2": 0.575787706032451
   },
   {
