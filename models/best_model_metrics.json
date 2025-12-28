@@ -1,8 +1,8 @@
 {
-  "rmse": 0.5422167577867202,
-  "mae": 0.37165044848436773,
-  "r2": 0.7756433164710084,
-  "best_model_name": "Gradient_Boosting",
-  "best_model_type": "GradientBoostingRegressor",
-  "training_timestamp": "2025-12-21T03:22:02.726312"
+  "rmse": 0.5386878172968619,
+  "mae": 0.362334273395191,
+  "r2": 0.7870478557916682,
+  "best_model_name": "Random_Forest",
+  "best_model_type": "RandomForestRegressor",
+  "training_timestamp": "2025-12-28T03:29:49.400883"
 }
