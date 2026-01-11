@@ -2,22 +2,22 @@
   {
     "model_name": "Linear_Regression",
     "model_type": "LinearRegression",
-    "rmse": 0.7226060834311904,
-    "mae": 0.5303087728210972,
-    "r2": 0.6168128502382073
+    "rmse": 0.7455813830127763,
+    "mae": 0.5332001304956566,
+    "r2": 0.575787706032451
   },
   {
     "model_name": "Random_Forest",
     "model_type": "RandomForestRegressor",
-    "rmse": 0.5386878172968619,
-    "mae": 0.362334273395191,
-    "r2": 0.7870478557916682
+    "rmse": 0.5443328206986048,
+    "mae": 0.36628865979805514,
+    "r2": 0.7738887441938533
   },
   {
     "model_name": "Gradient_Boosting",
     "model_type": "GradientBoostingRegressor",
-    "rmse": 0.5398495754060281,
-    "mae": 0.3727549100525677,
-    "r2": 0.786128341192818
+    "rmse": 0.5422167577867202,
+    "mae": 0.37165044848436773,
+    "r2": 0.7756433164710084
   }
 ]
