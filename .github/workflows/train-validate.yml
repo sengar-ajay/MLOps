@@ -1,0 +1,27 @@
+name: Train & Validate
+on:
+  workflow_dispatch:
+    inputs:
+      experiment:
+        description: MLflow experiment name
+        required: true
+        default: California_Housing_Regression
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Preprocess + Train
+        run: |
+          python src/data_preprocessing.py
+          python src/model_training.py
+      - name: Upload model artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: models
+          path: models/

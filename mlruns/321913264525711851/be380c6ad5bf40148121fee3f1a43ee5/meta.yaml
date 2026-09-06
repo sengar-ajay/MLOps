@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/asengar/Learning/Course/MTech/Sem%203/MLOps/MLOps/mlruns/321913264525711851/be380c6ad5bf40148121fee3f1a43ee5/artifacts
+end_time: 1754678850420
+entry_point_name: ''
+experiment_id: '321913264525711851'
+lifecycle_stage: active
+run_id: be380c6ad5bf40148121fee3f1a43ee5
+run_name: Linear_Regression
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754678846615
+status: 3
+tags: []
+user_id: asengar

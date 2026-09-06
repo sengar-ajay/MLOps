@@ -176,7 +176,7 @@ jobs:
           test_data_scaled = scaler.transform(test_data)
           prediction = model.predict(test_data_scaled)
 
-          print(f'Model prediction test: {prediction[0]:.2f}')
+          print(f'Model prediction test: {float(prediction[0]):.2f}')
 
           # Validate prediction is reasonable (for California housing)
           if 0.5 <= prediction[0] <= 15.0:
