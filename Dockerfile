@@ -29,7 +29,7 @@ COPY models/ ./models/
 COPY data/ ./data/
 
 # Create directories for MLflow artifacts (if needed)
-RUN mkdir -p mlruns mlartifacts
+RUN mkdir -p mlruns mlartifacts database logs reports
 
 # Expose port
 EXPOSE 5000

@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/asengar/Learning/Course/MTech/Sem%203/MLOps/MLOps/mlruns/321913264525711851/975af9ad64854b9da92f0b0f4cdb6b49/artifacts
+end_time: 1754704678594
+entry_point_name: ''
+experiment_id: '321913264525711851'
+lifecycle_stage: active
+run_id: 975af9ad64854b9da92f0b0f4cdb6b49
+run_name: Gradient_Boosting
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754704673404
+status: 3
+tags: []
+user_id: asengar

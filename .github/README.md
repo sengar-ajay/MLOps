@@ -279,6 +279,3 @@ gh run download <run_id>
 
 <img width="1664" height="1027" alt="image" src="https://github.com/user-attachments/assets/878387ae-4c57-44ac-bab7-c96fe6cb6ad3" />
 <img width="1664" height="1027" alt="image" src="https://github.com/user-attachments/assets/072e6b7c-5ffc-42eb-a7e0-7a591b7e6068" />
-
-
-
