@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MLOps Architecture Diagram</title>
+    <style>
+      :root {
+        --bg: #f7fafc;
+        --card: #fffde7;
+        --ink: #111827;
+      }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: Inter, Segoe UI, Arial, Helvetica, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+      .container { max-width: 1280px; margin: 24px auto; padding: 0 16px; }
+      h1 { font-size: 1.5rem; margin: 0 0 16px; }
+      .card {
+        background: var(--card);
+        border: 2px solid var(--ink);
+        border-radius: 8px;
+        padding: 12px;
+        box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+      }
+      .mermaid { overflow: auto; }
+      .toolbar { display: flex; gap: 8px; margin: 8px 0 16px; }
+      button { border: 2px solid var(--ink); background: #fff; color: var(--ink); padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+      button:hover { background: #f3f4f6; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>High-level Architecture</h1>
+      <div class="toolbar">
+        <button id="downloadSvg">Download SVG</button>
+      </div>
+      <div class="card">
+        <div class="mermaid" id="diagram">
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'fontFamily': 'Inter, Segoe UI, Arial',
+    'fontSize': '13px',
+    'primaryColor': '#FFFDE7',
+    'primaryTextColor': '#111827',
+    'primaryBorderColor': '#111827',
+    'clusterBkg': '#FFFDE7',
+    'clusterBorder': '#111827',
+    'lineColor': '#111827',
+    'tertiaryColor': '#FFFDE7',
+    'edgeLabelBackground': '#ffffff'
+  },
+  'flowchart': { 'nodeSpacing': 40, 'rankSpacing': 60 }
+}}%%
+graph TD
+  classDef default stroke:#111827,stroke-width:2px,fill:#FFFDE7,color:#111827;
+  %% Dev & CI/CD
+  subgraph "DevOps"
+    GH["GitHub Repository"]
+    GHA["GitHub Actions CI/CD\n(on: push, pull_request)"]
+  end
+
+  GH -->|"code push / PR"| GHA
+
+  %% Runtime Containers
+  subgraph "Container: mlops-api (Flask)"
+    API["Flask API (src/api.py)"]
+    PRED["Endpoints:\n/health, /info, /schema, /predict, /predict_batch\n/monitoring/*, /logs, /metrics/api, /metrics/models, /database/*"]
+    VALID["Pydantic Validation"]
+  end
+
+  subgraph "Model Serving"
+    MODEL["Model: models/best_model.pkl"]
+    SCALER["Scaler: data/scaler.pkl"]
+    FEAT["Feature Names: data/X_train.csv"]
+  end
+
+  %% Place Observability cluster above the Training cluster
+  subgraph "Observability"
+    PROM["Prometheus (/metrics)"]
+    DBLOG["SQLite logs (database/mlops_logs.db)"]
+  end
+
+  subgraph "Monitoring & Drift"
+    MON["APIMonitor → reports/"]
+    DRIFT["Data monitoring: drift + performance"]
+    TRIGGER["Retraining trigger → triggers/*.trigger"]
+  end
+
+  %% Training sits below Observability; rank it lower using invisible edge
+  subgraph "Training Pipeline (offline)"
+    PREP["Data Preprocessing (src/data_preprocessing.py)"]
+    TRAIN["Model Training (src/model_training.py)"]
+    BEST["Best Model + Metrics →\nmodels/best_model.pkl\nmodels/best_model_metrics.json"]
+  end
+
+  subgraph "Container: mlflow-server"
+    MLFLOW["MLflow Server (docker-compose)"]
+  end
+
+  subgraph "Shared Storage (volumes)"
+    DATA_DIR["data/"]
+    MODELS_DIR["models/"]
+    MLR_DIR["mlruns/"]
+    MLART_DIR["mlartifacts/"]
+    REPORTS["reports/"]
+    DB_DIR["database/"]
+    TRIG_DIR["triggers/"]
+  end
+
+  %% Clients
+  USER["User / External Client"] -->|HTTP| API
+  DEMO["demo_api.py CLI"] -->|HTTP| API
+
+  %% API internals
+  API --> PRED
+  API --> VALID
+  VALID -->|"load"| MODEL
+  VALID -->|"scale"| SCALER
+  MODEL -. "features" .- FEAT
+
+  %% Observability
+  API --> PROM
+  API --> DBLOG
+  MON -->|"GET/POST"| API
+  MON --> REPORTS
+
+  %% Monitoring & triggers
+  API --> DRIFT
+  DRIFT --> TRIGGER
+
+  %% Training & registry
+  PREP --> TRAIN
+  TRAIN --> BEST
+  TRAIN --> MLR_DIR
+  TRAIN --> MLART_DIR
+  MLFLOW -->|"reads/writes"| MLR_DIR
+  MLFLOW -->|"reads/writes"| MLART_DIR
+
+  %% Serving uses shared storage
+  MODEL --- MODELS_DIR
+  SCALER --- DATA_DIR
+
+  %% Containers mount shared storage
+  API --- DATA_DIR
+  API --- MODELS_DIR
+  API --- DB_DIR
+  API --- REPORTS
+  API --- TRIG_DIR
+  MLFLOW --- MLR_DIR
+  MLFLOW --- MLART_DIR
+
+  %% CI outputs (optional)
+  GHA -. "lint/test/build docker image" .-> API
+  GHA -. "artifact: image / reports" .-> GH
+
+  %% Layout hint: place Training below Observability via a feedback edge
+  PROM -. "observability feedback" .-> PREP
+  DBLOG -. "logs/metrics" .-> PREP
+        </div>
+      </div>
+    </div>
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true, securityLevel: 'strict' });
+
+      // Simple SVG downloader
+      const btn = document.getElementById('downloadSvg');
+      btn?.addEventListener('click', () => {
+        const svgEl = document.querySelector('#diagram svg');
+        if (!svgEl) return;
+        const serializer = new XMLSerializer();
+        const source = serializer.serializeToString(svgEl);
+        const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'mlops-architecture.svg';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      });
+    </script>
+  </body>
+  
+</html>
+

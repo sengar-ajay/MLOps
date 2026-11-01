@@ -5,10 +5,22 @@ Flask API for serving the California Housing price prediction model
 import logging
 import os
 from datetime import datetime
+from typing import List, Optional
 
 import joblib
 import pandas as pd
 from flask import Flask, jsonify, request
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    Counter,
+    Gauge,
+    Histogram,
+    generate_latest,
+)
+from prometheus_flask_exporter import PrometheusMetrics
+from pydantic import BaseModel, Field, ValidationError
+
+from data_monitoring import RetrainingTrigger
 
 # Import database logging
 from database_logging import get_database_logger, setup_database_logging
@@ -17,13 +29,96 @@ from database_logging import get_database_logger, setup_database_logging
 logger = setup_database_logging(__name__)
 db_logger = get_database_logger()
 
+
+# Pydantic models for input validation
+class HousingFeatures(BaseModel):
+    """Pydantic model for California Housing dataset features"""
+
+    MedInc: float = Field(..., ge=0, le=20, description="Median income in block group")
+    HouseAge: float = Field(
+        ..., ge=0, le=100, description="Median house age in block group"
+    )
+    AveRooms: float = Field(
+        ..., ge=1, le=50, description="Average number of rooms per household"
+    )
+    AveBedrms: float = Field(
+        ..., ge=0, le=10, description="Average number of bedrooms per household"
+    )
+    Population: float = Field(..., ge=1, le=50000, description="Block group population")
+    AveOccup: float = Field(
+        ..., ge=0.5, le=20, description="Average number of household members"
+    )
+    Latitude: float = Field(..., ge=32, le=42, description="Block group latitude")
+    Longitude: float = Field(..., ge=-125, le=-114, description="Block group longitude")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "MedInc": 8.3252,
+                "HouseAge": 41.0,
+                "AveRooms": 6.984,
+                "AveBedrms": 1.023,
+                "Population": 322.0,
+                "AveOccup": 2.555,
+                "Latitude": 37.88,
+                "Longitude": -122.23,
+            }
+        }
+
+
+class BatchPredictionRequest(BaseModel):
+    """Pydantic model for batch prediction requests"""
+
+    instances: List[HousingFeatures] = Field(
+        ..., min_items=1, max_items=100, description="List of housing instances"
+    )
+
+
+class PredictionResponse(BaseModel):
+    """Pydantic model for prediction responses"""
+
+    prediction: float
+    model_type: str
+    input: dict
+    timestamp: str
+
+
+class BatchPredictionResponse(BaseModel):
+    """Pydantic model for batch prediction responses"""
+
+    predictions: List[PredictionResponse]
+    total_predictions: int
+    timestamp: str
+
+
 # Initialize Flask app
 app = Flask(__name__)
+
+# Initialize Prometheus metrics
+metrics = PrometheusMetrics(app)
+
+# Custom Prometheus metrics
+prediction_counter = Counter(
+    "ml_predictions_total", "Total number of predictions made", ["model_type", "status"]
+)
+prediction_duration = Histogram(
+    "ml_prediction_duration_seconds", "Time spent making predictions"
+)
+model_accuracy = Gauge("ml_model_accuracy", "Current model accuracy score")
+api_requests = Counter(
+    "api_requests_total", "Total API requests", ["method", "endpoint", "status"]
+)
+validation_errors = Counter(
+    "input_validation_errors_total", "Total input validation errors", ["error_type"]
+)
 
 # Global variables for model and scaler
 model = None
 scaler = None
 feature_names = None
+
+# Initialize retraining trigger
+retraining_trigger = RetrainingTrigger()
 
 
 def load_model_and_scaler():
@@ -179,6 +274,28 @@ def health():
         )
 
 
+@app.route("/schema", methods=["GET"])
+def get_schema():
+    """
+    Get the Pydantic schema for input validation
+    """
+    try:
+        return jsonify(
+            {
+                "schema": {
+                    "HousingFeatures": HousingFeatures.model_json_schema(),
+                    "BatchPredictionRequest": BatchPredictionRequest.model_json_schema(),
+                },
+                "example": HousingFeatures.model_json_schema().get("example")
+                or HousingFeatures.Config.json_schema_extra["example"],
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error getting schema: {str(e)}")
+        return jsonify({"error": str(e), "timestamp": datetime.now().isoformat()}), 500
+
+
 @app.route("/info", methods=["GET"])
 def info():
     """
@@ -208,9 +325,9 @@ def info():
 @app.route("/predict", methods=["POST"])
 def predict():
     """
-    Prediction endpoint
+    Prediction endpoint with Pydantic validation
 
-    Expected input format:
+    Expected input format (validated by Pydantic):
     {
         "MedInc": 8.3252,
         "HouseAge": 41.0,
@@ -222,6 +339,8 @@ def predict():
         "Longitude": -122.23
     }
     """
+    start_time = datetime.now()
+
     try:
         # Get JSON data from request
         try:
@@ -248,8 +367,33 @@ def predict():
                 400,
             )
 
-        # Log the prediction request
-        logger.info(f"Prediction request received: {data}")
+        # Validate input using Pydantic
+        try:
+            validated_input = HousingFeatures(**data)
+            logger.info(f"Prediction request validated: {validated_input.model_dump()}")
+        except ValidationError as e:
+            validation_errors_list = []
+            for error in e.errors():
+                field = error["loc"][0] if error["loc"] else "unknown"
+                message = error["msg"]
+                validation_errors_list.append(f"{field}: {message}")
+                # Track validation errors in Prometheus
+                validation_errors.labels(error_type=field).inc()
+
+            api_requests.labels(
+                method="POST", endpoint="/predict", status="validation_error"
+            ).inc()
+
+            return (
+                jsonify(
+                    {
+                        "error": "Input validation failed",
+                        "validation_errors": validation_errors_list,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                ),
+                400,
+            )
 
         # Check if model is loaded
         if model is None or scaler is None or feature_names is None:
@@ -263,38 +407,72 @@ def predict():
                 500,
             )
 
-        # Validate input
-        is_valid, error_message = validate_input(data)
-        if not is_valid:
-            return (
-                jsonify(
-                    {"error": error_message, "timestamp": datetime.now().isoformat()}
-                ),
-                400,
-            )
+        # Prepare input data using validated input
+        input_dict = validated_input.model_dump()
+        input_data = pd.DataFrame([input_dict])[feature_names]
 
-        # Prepare input data
-        input_data = pd.DataFrame([data])[feature_names]
-
-        # Scale the input
+        # Scale the input (ensure column names are preserved)
         input_scaled = scaler.transform(input_data)
 
-        # Make prediction
-        prediction = model.predict(input_scaled)[0]
+        # Convert to DataFrame to preserve feature names for the model
+        input_scaled_df = pd.DataFrame(input_scaled, columns=feature_names)
+
+        # Make prediction with timing
+        with prediction_duration.time():
+            prediction = model.predict(input_scaled_df)[0]
+
+        # Calculate response time
+        response_time = (datetime.now() - start_time).total_seconds()
+
+        # Update Prometheus metrics
+        prediction_counter.labels(
+            model_type=type(model).__name__, status="success"
+        ).inc()
+        api_requests.labels(method="POST", endpoint="/predict", status="success").inc()
+
+        # Log API metrics to database
+        db_logger.log_api_metric(
+            endpoint="/predict",
+            method="POST",
+            status_code=200,
+            response_time=response_time,
+            success=True,
+            request_data=input_dict,
+            response_data={"prediction": float(prediction)},
+        )
 
         # Log the prediction
-        logger.info(f"Prediction made: {prediction}")
+        logger.info(
+            f"Prediction made: {prediction} (response_time: {response_time:.3f}s)"
+        )
 
         return jsonify(
             {
                 "prediction": float(prediction),
-                "input": data,
+                "input": input_dict,
                 "timestamp": datetime.now().isoformat(),
                 "model_type": type(model).__name__,
             }
         )
 
     except Exception as e:
+        # Update Prometheus metrics for error
+        prediction_counter.labels(
+            model_type=type(model).__name__ if model else "unknown", status="error"
+        ).inc()
+        api_requests.labels(method="POST", endpoint="/predict", status="error").inc()
+
+        # Log API metrics for error case
+        response_time = (datetime.now() - start_time).total_seconds()
+        db_logger.log_api_metric(
+            endpoint="/predict",
+            method="POST",
+            status_code=500,
+            response_time=response_time,
+            success=False,
+            error_message=str(e),
+        )
+
         logger.error(f"Error making prediction: {str(e)}")
         return jsonify({"error": str(e), "timestamp": datetime.now().isoformat()}), 500
 
@@ -370,8 +548,11 @@ def predict_batch():
         # Scale the input
         input_scaled = scaler.transform(input_df)
 
+        # Convert to DataFrame to preserve feature names for the model
+        input_scaled_df = pd.DataFrame(input_scaled, columns=feature_names)
+
         # Make predictions
-        predictions = model.predict(input_scaled).tolist()
+        predictions = model.predict(input_scaled_df).tolist()
 
         logger.info(f"Batch prediction made for {len(instances)} instances")
 
@@ -597,6 +778,146 @@ def clear_database():
             ),
             500,
         )
+
+
+@app.route("/monitoring/drift", methods=["POST"])
+def check_data_drift():
+    """
+    Check for data drift in new data
+
+    Expected input:
+    {
+        "data": [
+            {"MedInc": 8.32, "HouseAge": 41, ...},
+            {"MedInc": 7.25, "HouseAge": 35, ...}
+        ]
+    }
+    """
+    try:
+        data = request.get_json()
+        if not data or "data" not in data:
+            return jsonify({"error": "No data provided for drift detection"}), 400
+
+        # Convert to DataFrame
+        new_data = pd.DataFrame(data["data"])
+
+        # Check drift
+        drift_results = retraining_trigger.drift_detector.detect_drift(new_data)
+
+        return jsonify(
+            {"drift_analysis": drift_results, "timestamp": datetime.now().isoformat()}
+        )
+
+    except Exception as e:
+        logger.error(f"Error in drift detection: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/monitoring/retraining-check", methods=["POST"])
+def check_retraining_need():
+    """
+    Check if model retraining is needed
+
+    Expected input:
+    {
+        "new_data": [{"MedInc": 8.32, ...}],
+        "predictions": [4.2, 3.8, 5.1],
+        "actuals": [4.1, 3.9, 5.0]
+    }
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+
+        new_data = pd.DataFrame(data.get("new_data", []))
+        predictions = data.get("predictions", [])
+        actuals = data.get("actuals", [])
+
+        # Check if retraining is needed
+        decision = retraining_trigger.should_retrain(
+            new_data=new_data,
+            predictions=predictions if predictions else None,
+            actuals=actuals if actuals else None,
+        )
+
+        return jsonify(decision)
+
+    except Exception as e:
+        logger.error(f"Error checking retraining need: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/monitoring/trigger-retraining", methods=["POST"])
+def trigger_model_retraining():
+    """
+    Manually trigger model retraining
+    """
+    try:
+        # Trigger retraining
+        result = retraining_trigger.trigger_retraining()
+
+        if result["status"] == "success":
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 500
+
+    except Exception as e:
+        logger.error(f"Error triggering retraining: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/monitoring/config", methods=["GET"])
+def get_monitoring_config():
+    """
+    Get current monitoring configuration
+    """
+    try:
+        return jsonify(
+            {
+                "config": retraining_trigger.config,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error getting monitoring config: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/monitoring/status", methods=["GET"])
+def get_monitoring_status():
+    """
+    Get monitoring system status
+    """
+    try:
+        # Check if trigger files exist
+        trigger_files = []
+        if os.path.exists("triggers"):
+            trigger_files = [
+                f for f in os.listdir("triggers") if f.endswith(".trigger")
+            ]
+
+        status = {
+            "monitoring_active": True,
+            "drift_detection_enabled": retraining_trigger.config.get(
+                "monitoring_config", {}
+            ).get("enable_drift_detection", True),
+            "performance_monitoring_enabled": retraining_trigger.config.get(
+                "monitoring_config", {}
+            ).get("enable_performance_monitoring", True),
+            "automatic_retraining_enabled": retraining_trigger.config.get(
+                "enable_automatic_retraining", True
+            ),
+            "pending_retraining_triggers": len(trigger_files),
+            "trigger_files": trigger_files,
+            "timestamp": datetime.now().isoformat(),
+        }
+
+        return jsonify(status)
+
+    except Exception as e:
+        logger.error(f"Error getting monitoring status: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
