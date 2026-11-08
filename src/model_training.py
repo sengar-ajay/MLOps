@@ -69,8 +69,11 @@ def train_linear_regression(X_train, y_train, X_test, y_test):
         mlflow.log_metric("mae", metrics["mae"])
         mlflow.log_metric("r2", metrics["r2"])
 
-        # Log model
-        mlflow.sklearn.log_model(model, "model")
+        # Log model (skip in CI environment due to path issues)
+        if not os.getenv("GITHUB_ACTIONS"):
+            mlflow.sklearn.log_model(model, "model")
+        else:
+            logger.info("Skipping model logging in GitHub Actions environment")
 
         logger.info(
             f"Linear Regression - RMSE: {metrics['rmse']:.4f}, "
@@ -113,8 +116,11 @@ def train_random_forest(
         mlflow.log_metric("mae", metrics["mae"])
         mlflow.log_metric("r2", metrics["r2"])
 
-        # Log model
-        mlflow.sklearn.log_model(model, "model")
+        # Log model (skip in CI environment due to path issues)
+        if not os.getenv("GITHUB_ACTIONS"):
+            mlflow.sklearn.log_model(model, "model")
+        else:
+            logger.info("Skipping model logging in GitHub Actions environment")
 
         logger.info(
             f"Random Forest - RMSE: {metrics['rmse']:.4f}, "
@@ -168,8 +174,11 @@ def train_gradient_boosting(
         mlflow.log_metric("mae", metrics["mae"])
         mlflow.log_metric("r2", metrics["r2"])
 
-        # Log model
-        mlflow.sklearn.log_model(model, "model")
+        # Log model (skip in CI environment due to path issues)
+        if not os.getenv("GITHUB_ACTIONS"):
+            mlflow.sklearn.log_model(model, "model")
+        else:
+            logger.info("Skipping model logging in GitHub Actions environment")
 
         logger.info(
             f"Gradient Boosting - RMSE: {metrics['rmse']:.4f}, "
@@ -278,6 +287,12 @@ def main():
 
     # Load processed data
     X_train, X_test, y_train, y_test, scaler = load_processed_data()
+
+    # Configure MLflow for CI environment
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
+    if tracking_uri:
+        mlflow.set_tracking_uri(tracking_uri)
+        logger.info(f"MLflow tracking URI set to: {tracking_uri}")
 
     # Set MLflow experiment
     mlflow.set_experiment("California_Housing_Regression")
