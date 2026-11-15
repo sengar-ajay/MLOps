@@ -1,0 +1,10 @@
+artifact_location: file:///Users/asengar/Learning/Course/MTech/Sem%203/MLOps/MLOps/mlruns/321913264525711851/models/m-96891d6e0e9d4af58a416d6f36866d29/artifacts
+creation_timestamp: 1754704661727
+experiment_id: '321913264525711851'
+last_updated_timestamp: 1754704665196
+model_id: m-96891d6e0e9d4af58a416d6f36866d29
+model_type: null
+name: model
+source_run_id: 604d86a03a7b4c58bbb22a7032c938c0
+status: 2
+status_message: null

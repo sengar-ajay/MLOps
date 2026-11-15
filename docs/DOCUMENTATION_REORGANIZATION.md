@@ -6,7 +6,7 @@ All markdown documentation files have been moved to the `docs/` folder for bette
 
 ## Files Moved to `docs/` Folder
 
-### ✅ Successfully Moved:
+###  Successfully Moved:
 
 1. **ASSIGNMENT_SUMMARY.md** - Complete implementation summary and requirements coverage
 2. **CLEANUP_SUMMARY.md** - Special characters cleanup summary
@@ -16,11 +16,11 @@ All markdown documentation files have been moved to the `docs/` folder for bette
 6. **TESTING_GUIDE.md** - Comprehensive testing guide and test scenarios
 7. **WORKFLOW_FIXES.md** - CI/CD workflow fixes and improvements
 
-### ✅ Created:
+###  Created:
 
 - **docs/README.md** - Documentation index and navigation guide
 
-### ✅ Kept in Root:
+###  Kept in Root:
 
 - **README.md** - Main project documentation with API reference
 
@@ -86,18 +86,18 @@ MLOps/
 
 ### Main README.md Updates:
 
-1. ✅ Added documentation callout at the top
-2. ✅ Updated project structure to show docs/ folder
-3. ✅ Added Documentation section with links to guides
-4. ✅ Maintained comprehensive API documentation
+1.  Added documentation callout at the top
+2.  Updated project structure to show docs/ folder
+3.  Added Documentation section with links to guides
+4.  Maintained comprehensive API documentation
 
 ### Documentation Index:
 
-1. ✅ Created docs/README.md with navigation
-2. ✅ Organized by use case (setup, development, maintenance)
-3. ✅ Clear descriptions of each document's purpose
+1.  Created docs/README.md with navigation
+2.  Organized by use case (setup, development, maintenance)
+3.  Clear descriptions of each document's purpose
 
-## Status: ✅ Complete
+## Status:  Complete
 
 All markdown files have been successfully reorganized with:
 
